@@ -5,3 +5,10 @@ sql:
   username: 'root'
   password: ''
 spawnworld: world
+spawnbounds:
+  minx: 100
+  miny: 100
+  minz: 100
+  maxx: 300
+  maxy: 200
+  maxz: 300

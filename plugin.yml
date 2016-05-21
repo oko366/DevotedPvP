@@ -37,6 +37,10 @@ commands:
     description: Command for creating structures
     usage: /structure name
     permission: pvp.badmin
+  team:
+    description: Change your team
+    usage: /team <color>
+    permission: pvp.use
 
 permissions:
   pvp.use:

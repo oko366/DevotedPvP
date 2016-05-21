@@ -252,6 +252,10 @@ public class DuelManager implements Listener {
 		player.sendMessage(ChatColor.GOLD + "Your elo is " + getElo(player.getUniqueId()) + " and you're ranked #" + rankings.indexOf(player.getUniqueId()));
 	}
 	
+	public boolean isInDuel(UUID player) {
+		return dueling.containsKey(player);
+	}
+	
 	class QueueThread extends BukkitRunnable {
 		
 		@Override

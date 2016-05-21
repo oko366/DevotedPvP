@@ -76,7 +76,7 @@ public class MapStructure {
 	
 	public void save(File f) {
 		try {
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			Gson gson = new GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create();
 			FileWriter fw = new FileWriter(f);
 			fw.write(gson.toJson(this));
 			fw.close();

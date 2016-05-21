@@ -1,7 +1,9 @@
 package com.biggestnerd.devotedpvp;
 
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class DevotedPvP extends JavaPlugin {
@@ -13,7 +15,10 @@ public class DevotedPvP extends JavaPlugin {
 	private InventoryManager invMan;
 	private DuelManager duelMan;
 	private MapManager mapMan;
+	private TeamManager teamMan;
 	private World spawnWorld;
+	private Location spawnMin;
+	private Location spawnMax;
 	
 	@Override
 	public void onEnable() {
@@ -27,8 +32,10 @@ public class DevotedPvP extends JavaPlugin {
 		invMan = InventoryManager.getInstance();
 		duelMan = DuelManager.getInstance();
 		mapMan = MapManager.getInstance();
+		teamMan = TeamManager.getInstance();
 		getServer().getPluginManager().registerEvents(mapMan, this);
 		getServer().getPluginManager().registerEvents(duelMan, this);
+		setupSpawnLocations();
 	}
 	
 	private void initializeDb() {
@@ -53,6 +60,21 @@ public class DevotedPvP extends JavaPlugin {
 		getCommand("structure").setExecutor(cHandler);
 	}
 	
+	private void setupSpawnLocations() {
+		ConfigurationSection config = getConfig().getConfigurationSection("spawnbounds");
+		spawnMin = new Location(spawnWorld, config.getInt("minx"), config.getInt("miny"), config.getInt("minz"));
+		spawnMax = new Location(spawnWorld, config.getInt("maxx"), config.getInt("maxy"), config.getInt("maxz"));
+	}
+	
+	public boolean inSpawn(Player player) {
+		Location loc = player.getLocation();
+		int x = loc.getBlockX();
+		int y = loc.getBlockY();
+		int z = loc.getBlockZ();
+		return x > spawnMin.getBlockX() && y > spawnMin.getBlockY() && z > spawnMin.getBlockZ()
+				&& x < spawnMax.getBlockX() && y < spawnMax.getBlockY() && z < spawnMax.getBlockZ();
+	}
+	
 	public Database getDb() {
 		return db;
 	}
@@ -67,6 +89,10 @@ public class DevotedPvP extends JavaPlugin {
 	
 	public MapManager getMapManager() {
 		return mapMan;
+	}
+	
+	public TeamManager getTeamManager() {
+		return teamMan;
 	}
 	
 	public World getSpawnWorld() {

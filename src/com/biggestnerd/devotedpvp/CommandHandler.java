@@ -1,12 +1,13 @@
 package com.biggestnerd.devotedpvp;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-
-import net.md_5.bungee.api.ChatColor;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 public class CommandHandler implements CommandExecutor {
 
@@ -18,29 +19,39 @@ public class CommandHandler implements CommandExecutor {
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if(sender instanceof Player) {
+			Player player = (Player) sender;
+			if(!(label.equals("forfeit") || label.equals("elo") || label.equals("wand") || label.equals("structure"))) {
+				if(!plugin.inSpawn(player)) {
+					player.sendMessage(ChatColor.RED + "You can only use that command in spawn");
+					return true;
+				}
+			}
+		} else {
+			sender.sendMessage(ChatColor.RED + "Only players can use that command dummy!");
+			return true;
+		}
+		Player player = (Player) sender;
 		switch(label) {
-		case "inv": return handleInventoryCommand(sender, args);
-		case "queue": return handleQueueCommand(sender);
-		case "duel": return handleDuelCommand(sender, args);
-		case "accept": return handleAcceptCommand(sender, args);
-		case "forfeit": return handleForfeitCommand(sender);
-		case "elo": return handleEloCommand(sender);
-		case "wand": return handleWandCommand(sender);
-		case "structure": return handleStructureCommand(sender, args);
+		case "inv": return handleInventoryCommand(player, args);
+		case "queue": return handleQueueCommand(player);
+		case "duel": return handleDuelCommand(player, args);
+		case "accept": return handleAcceptCommand(player, args);
+		case "forfeit": return handleForfeitCommand(player);
+		case "elo": return handleEloCommand(player);
+		case "wand": return handleWandCommand(player);
+		case "structure": return handleStructureCommand(player, args);
+		case "spectate": return handleSpectateCommand(player, args);
+		case "team": return handleTeamCommand(player, args);
 		}
 		return true;
 	}
 
-	private boolean handleInventoryCommand(CommandSender sender, String[] args) {
-		if(!(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Only players can use the inventory command!");
-			return true;
-		}
+	private boolean handleInventoryCommand(Player player, String[] args) {
 		if(args.length == 0) {
-			sender.sendMessage(ChatColor.RED + "Invalid arguments, do /inv <load|save|del|transfer> inventory or /inv clear");
+			player.sendMessage(ChatColor.RED + "Invalid arguments, do /inv <load|save|del|transfer> inventory or /inv clear");
 			return true;
 		}
-		Player player = (Player) sender;
 		switch(args[0]) {
 		case "save":
 			if(args.length < 2) {
@@ -114,24 +125,15 @@ public class CommandHandler implements CommandExecutor {
 		return true;
 	}
 
-	private boolean handleQueueCommand(CommandSender sender) {
-		if(!(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Sorry, only players can queue for ranked matches");
-			return true;
-		}
-		plugin.getDuelManager().queuePlayer((Player) sender);
+	private boolean handleQueueCommand(Player player) {
+		plugin.getDuelManager().queuePlayer((Player) player);
 		return true;
 	}
 	
-	private boolean handleDuelCommand(CommandSender sender, String[] args) {
-		if(!(sender instanceof Player))	{
-			sender.sendMessage(ChatColor.RED + "Sorry, only players can enter duels");
-			return true;
-		}
+	private boolean handleDuelCommand(Player player, String[] args) {
 		if(args.length == 0) {
-			sender.sendMessage(ChatColor.RED + "Invalid arguments, do /duel player");
+			player.sendMessage(ChatColor.RED + "Invalid arguments, do /duel player");
 		} else {
-			Player player = (Player) sender;
 			Player request = Bukkit.getPlayer(args[0]);
 			if(request == null) {
 				player.sendMessage(ChatColor.RED + "Player not found, you can't request duels with players who don't exist");
@@ -142,60 +144,84 @@ public class CommandHandler implements CommandExecutor {
 		return true;
 	}
 	
-	private boolean handleAcceptCommand(CommandSender sender, String[] args) {
-		if(!(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Sorry, only players can accept duels");
-			return true;
-		}
+	private boolean handleAcceptCommand(Player player, String[] args) {
 		if(args.length == 0) {
-			plugin.getDuelManager().acceptDuel((Player)sender);
+			plugin.getDuelManager().acceptDuel((Player)player);
 		} else {
 			Player accepted = Bukkit.getPlayer(args[0]);
 			if(accepted == null) {
-				sender.sendMessage(ChatColor.RED + "Player not found, you can't accept duels with players who don't exist");
+				player.sendMessage(ChatColor.RED + "Player not found, you can't accept duels with players who don't exist");
 			} else {
-				plugin.getDuelManager().acceptDuel((Player)sender, accepted);
+				plugin.getDuelManager().acceptDuel((Player)player, accepted);
 			}
 		}
 		return true;
 	}
 	
-	private boolean handleForfeitCommand(CommandSender sender) {
-		if(!(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Sorry, only players can forfeit duels");
-			return true;
-		}
-		plugin.getDuelManager().forfeitDuel((Player)sender);
+	private boolean handleForfeitCommand(Player player) {
+		plugin.getDuelManager().forfeitDuel((Player)player);
 		return true;
 	}
 	
-	private boolean handleEloCommand(CommandSender sender) {
-		if(!(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Sorry, only players can check their elo");
-			return true;
-		}
-		plugin.getDuelManager().sendEloMessage((Player)sender);
+	private boolean handleEloCommand(Player player) {
+		plugin.getDuelManager().sendEloMessage((Player)player);
 		return true;
 	}
 	
-	private boolean handleWandCommand(CommandSender sender) {
-		if(!(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Sorry, only players can have wands");
-			return true;
-		}
-		plugin.getMapManager().giveWand((Player)sender);
+	private boolean handleWandCommand(Player player) {
+		plugin.getMapManager().giveWand((Player)player);
 		return true;
 	}
 	
-	private boolean handleStructureCommand(CommandSender sender, String[] args) {
-		if(!(sender instanceof Player)) {
-			sender.sendMessage(ChatColor.RED + "Sorry, only players can make structures");
-			return true;
-		}
+	private boolean handleStructureCommand(Player player, String[] args) {
 		if(args.length == 0) {
-			sender.sendMessage(ChatColor.RED + "Invalid arguments, do /structure name");
+			player.sendMessage(ChatColor.RED + "Invalid arguments, do /structure name");
 		} else {
-			plugin.getMapManager().makeStructure((Player)sender, args[0]);
+			plugin.getMapManager().makeStructure((Player)player, args[0]);
+		}
+		return true;
+	}
+	
+	private boolean handleSpectateCommand(Player player, String[] args) {
+		if(args.length == 0) {
+			if(player.getGameMode() == GameMode.SPECTATOR) {
+				player.sendMessage(ChatColor.GREEN + "You have left spectating mode, teleporting you back to spawn");
+				player.teleport(plugin.getSpawnWorld().getSpawnLocation());
+				return true;
+			}
+			player.sendMessage(ChatColor.RED + "Invalid arguments, do /spectate player");
+		} else {
+			Player other = Bukkit.getPlayer(args[0]);
+			if(other == null) {
+				player.sendMessage(ChatColor.RED + "Player not found, you can't spectate players who don't exist");
+			} else if(plugin.getDuelManager().isInDuel(other.getUniqueId())) {
+				player.teleport(other, TeleportCause.PLUGIN);
+				player.setGameMode(GameMode.SPECTATOR);
+				player.sendMessage(ChatColor.GREEN + "You are now spectating " + args[0]);
+			} else {
+				player.sendMessage(ChatColor.RED + args[0] + " is not in a duel, you can't spectate players not in a duel");
+			}
+		}
+		return true;
+	}
+	
+	private boolean handleTeamCommand(Player player, String[] args) {
+		if(args.length == 0) {
+			player.sendMessage(ChatColor.RED + "Invalid arguments, do /team <color|clear>");
+		} else {
+			String color = args[0].toUpperCase();
+			if(color.equalsIgnoreCase("clear")) {
+				plugin.getTeamManager().clearTeam(player);
+				player.sendMessage(ChatColor.GREEN + "You are not longer on a team");
+			} else {
+				ChatColor team = ChatColor.valueOf(color);
+				if(team == null) {
+					player.sendMessage(ChatColor.RED + color + " is not a valid team");
+				} else {
+					plugin.getTeamManager().handleTeamChange(player, team);
+					player.sendMessage("You are now on the " + team + color + ChatColor.WHITE + " team");
+				}
+			}
 		}
 		return true;
 	}

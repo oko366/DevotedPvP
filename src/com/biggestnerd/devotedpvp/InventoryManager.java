@@ -50,7 +50,8 @@ public class InventoryManager {
 					ps.setBytes(1, SerializationUtils.serialize(inv.getArmorContents()));
 					ps.setBytes(2, SerializationUtils.serialize(inv.getContents()));
 					ps.setString(3, kitName);
-					return ps.executeUpdate() != 0;
+					ps.execute();
+					return true;
 				}
 			}
 			addInventory.setString(1, kitName);
@@ -58,7 +59,8 @@ public class InventoryManager {
 			PlayerInventory inv = player.getInventory();
 			addInventory.setBytes(2, SerializationUtils.serialize(inv.getArmorContents()));
 			addInventory.setBytes(3, SerializationUtils.serialize(inv.getContents()));
-			return addInventory.executeUpdate() != 0;
+			addInventory.execute();
+			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -88,7 +90,8 @@ public class InventoryManager {
 				if(UUID.fromString(result.getString("owner")).equals(owner.getUniqueId())) {
 					updateOwner.setString(1, newOwner.getUniqueId().toString());
 					updateOwner.setString(2, kitName);
-					return updateOwner.executeUpdate() != 0;
+					updateOwner.execute();
+					return true;
 				}
 			}
 		} catch (Exception ex) {
@@ -114,7 +117,8 @@ public class InventoryManager {
 			if(result.next()) {
 				if(UUID.fromString(result.getString("owner")).equals(player.getUniqueId())) {
 					deleteInventory.setString(1, kitName);
-					return deleteInventory.executeUpdate() != 0;
+					deleteInventory.execute();
+					return true;
 				}
 			}
 		} catch (Exception ex) {
