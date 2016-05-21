@@ -1,0 +1,7 @@
+sql:
+  hostname: 'localhost'
+  port: 3306
+  dbname: 'devotedpvp'
+  username: 'root'
+  password: ''
+spawnworld: world
