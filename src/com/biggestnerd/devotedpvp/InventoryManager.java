@@ -25,6 +25,7 @@ public class InventoryManager {
 	private PreparedStatement addInventory;
 	private PreparedStatement updateOwner;
 	private PreparedStatement deleteInventory;
+	private PreparedStatement updateInventory;
 	
 	private InventoryManager() {
 		plugin = DevotedPvP.getInstance();
@@ -41,6 +42,7 @@ public class InventoryManager {
 		addInventory = db.prepareStatement("INSERT INTO inventories (name, inv, owner) VALUES (?,?,?)");
 		updateOwner = db.prepareStatement("UPDATE inventories SET owner=? WHERE name=?");
 		deleteInventory = db.prepareStatement("DELETE FROM inventories WHERE name=?");
+		updateInventory = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
 	}
 	
 	public boolean saveInventory(Player player, String kitName) {
@@ -59,10 +61,9 @@ public class InventoryManager {
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
 				if(UUID.fromString(result.getString("owner")).equals(player.getUniqueId())) {
-					PreparedStatement ps = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
-					addInventory.setBytes(2, out.toByteArray());
-					ps.setString(3, kitName);
-					ps.execute();
+					updateInventory.setBytes(1, out.toByteArray());
+					updateInventory.setString(2, kitName);
+					updateInventory.execute();
 					return true;
 				}
 			}

@@ -58,7 +58,7 @@ public class CommandHandler implements CommandExecutor {
 				player.sendMessage(ChatColor.RED + "Invalid arguments, do /inv save inventory");
 			} else {
 				if(InventoryManager.getInstance().saveInventory(player, args[1])) {
-					player.sendMessage(ChatColor.GREEN + "Inventory successfully loaded: " + args[1]);
+					player.sendMessage(ChatColor.GREEN + "Inventory successfully saved: " + args[1]);
 				} else {
 					if(InventoryManager.getInstance().inventoryExists(args[1])) {
 						player.sendMessage(ChatColor.RED + "You can't save an inventory you don't own!");
@@ -73,7 +73,7 @@ public class CommandHandler implements CommandExecutor {
 				player.sendMessage(ChatColor.RED + "Invalid arguments, do /inv load inventory");
 			} else {
 				if(InventoryManager.getInstance().loadInventory(player, args[1])) {
-					player.sendMessage(ChatColor.GREEN + "Inventory successfully saved: " + args[1]);
+					player.sendMessage(ChatColor.GREEN + "Inventory successfully loaded: " + args[1]);
 				} else {
 					player.sendMessage(ChatColor.RED + "Invalid inventory name");
 				}
@@ -82,6 +82,7 @@ public class CommandHandler implements CommandExecutor {
 		case "clear:": 
 			player.getInventory().clear();
 			player.getInventory().setArmorContents(null);
+			player.sendMessage(ChatColor.GREEN + "Inventory cleared!");
 			break;
 		case "transfer":
 			if(args.length < 3) {
