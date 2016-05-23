@@ -63,6 +63,7 @@ public class KillStreakManager implements Listener {
 	
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {
+		event.setDeathMessage("");
 		Player player = event.getEntity();
 		player.getWorld().strikeLightning(player.getLocation().add(0, 100, 0));
 		if(faces.containsKey(player.getUniqueId())) {

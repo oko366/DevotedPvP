@@ -1,13 +1,16 @@
 package com.biggestnerd.devotedpvp;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
+
+import net.minecraft.server.v1_9_R1.EntityHuman;
+import net.minecraft.server.v1_9_R1.NBTCompressedStreamTools;
+import net.minecraft.server.v1_9_R1.NBTTagCompound;
 
 public class InventoryManager {
 
@@ -30,35 +33,40 @@ public class InventoryManager {
 	private void setupTables() {
 		db.execute("CREATE TABLE IF NOT EXISTS inventories ("
 					+ "name VARCHAR(40) UNIQUE NOT NULL,"
-					+ "armor blob,"
-					+ "contents blob,"
+					+ "inv blob,"
 					+ "owner VARCHAR(36) NOT NULL)");
 		getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
-		addInventory = db.prepareStatement("INSERT INTO inventories (name, armor, contents, owner) VALUES (?,?,?,?)");
+		addInventory = db.prepareStatement("INSERT INTO inventories (name, inv, owner) VALUES (?,?,?)");
 		updateOwner = db.prepareStatement("UPDATE inventories SET owner=? WHERE name=?");
 		deleteInventory = db.prepareStatement("DELETE FROM inventories WHERE name=?");
 	}
 	
 	public boolean saveInventory(Player player, String kitName) {
+		if(!(player instanceof EntityHuman)) {
+			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
+			return false;
+		}
+		EntityHuman human = (EntityHuman) player;
 		try {
+			NBTTagCompound nbt = new NBTTagCompound();
+			human.e(nbt);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			NBTCompressedStreamTools.a(nbt, out);
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
 				if(UUID.fromString(result.getString("owner")).equals(player.getUniqueId())) {
-					PreparedStatement ps = db.prepareStatement("UPDATE inventories SET armor=?, contents=? WHERE name=?");
-					PlayerInventory inv = player.getInventory();
-					ps.setBytes(1, SerializationUtils.serialize(inv.getArmorContents()));
-					ps.setBytes(2, SerializationUtils.serialize(inv.getContents()));
+					PreparedStatement ps = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
+					addInventory.setBytes(2, out.toByteArray());
 					ps.setString(3, kitName);
 					ps.execute();
 					return true;
 				}
 			}
+			
 			addInventory.setString(1, kitName);
-			addInventory.setString(4, player.getUniqueId().toString());
-			PlayerInventory inv = player.getInventory();
-			addInventory.setBytes(2, SerializationUtils.serialize(inv.getArmorContents()));
-			addInventory.setBytes(3, SerializationUtils.serialize(inv.getContents()));
+			addInventory.setString(3, player.getUniqueId().toString());
+			addInventory.setBytes(2, out.toByteArray());
 			addInventory.execute();
 			return true;
 		} catch (Exception ex) {
@@ -68,12 +76,21 @@ public class InventoryManager {
 	}
 	
 	public boolean loadInventory(Player player, String kitName) {
+		if(!(player instanceof EntityHuman)) {
+			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
+			return false;
+		}
+		EntityHuman human = (EntityHuman) player;
 		try {
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
-				player.getInventory().setArmorContents((ItemStack[])SerializationUtils.deserialize(result.getBytes("armor")));
-				player.getInventory().setContents((ItemStack[])SerializationUtils.deserialize(result.getBytes("contents")));
+				NBTTagCompound nbt = null;
+				ByteArrayInputStream input = new ByteArrayInputStream(result.getBytes("inv"));
+				nbt = NBTCompressedStreamTools.a(input);
+				if(nbt != null) {
+					human.f(nbt);
+				}
 				return true;
 			}
 		} catch (Exception ex) {
