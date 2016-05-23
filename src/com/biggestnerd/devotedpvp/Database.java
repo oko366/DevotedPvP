@@ -17,7 +17,7 @@ public class Database {
 	private String password;
 	private Logger logger;
 	private Connection connection;
-
+	
 	public Database(String host, int port, String db, String user,
 			String password, Logger logger) {
 		this.host = host;
@@ -50,7 +50,7 @@ public class Database {
 		try {
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
 		} catch (Exception ex) {
-			throw new DataSourceException("Failed to initialize JDBC driver.");
+			throw new DataSourceException("Failed to initialize JDBC drive.");
 		}
 		try {
 			connection = DriverManager.getConnection(jdbc);

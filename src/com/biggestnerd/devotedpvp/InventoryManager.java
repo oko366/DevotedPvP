@@ -34,7 +34,7 @@ public class InventoryManager {
 					+ "contents blob,"
 					+ "owner VARCHAR(36) NOT NULL)");
 		getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
-		addInventory = db.prepareStatement("INSERT INTO inventories (name, armor, contents, owner) VALUES (?,?,?)");
+		addInventory = db.prepareStatement("INSERT INTO inventories (name, armor, contents, owner) VALUES (?,?,?,?)");
 		updateOwner = db.prepareStatement("UPDATE inventories SET owner=? WHERE name=?");
 		deleteInventory = db.prepareStatement("DELETE FROM inventories WHERE name=?");
 	}

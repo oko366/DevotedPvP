@@ -102,4 +102,8 @@ public class DevotedPvP extends JavaPlugin {
 	public static DevotedPvP getInstance() {
 		return instance;
 	}
+	
+	public static void disable() {
+		instance.getServer().getPluginManager().disablePlugin(instance);
+	}
 }
