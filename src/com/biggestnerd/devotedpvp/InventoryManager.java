@@ -6,9 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
 
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import net.minecraft.server.v1_9_R1.EntityHuman;
+import net.minecraft.server.v1_9_R1.EntityPlayer;
 import net.minecraft.server.v1_9_R1.NBTCompressedStreamTools;
 import net.minecraft.server.v1_9_R1.NBTTagCompound;
 
@@ -42,11 +44,12 @@ public class InventoryManager {
 	}
 	
 	public boolean saveInventory(Player player, String kitName) {
-		if(!(player instanceof EntityHuman)) {
+		if(!(player instanceof CraftPlayer)) {
 			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
 			return false;
 		}
-		EntityHuman human = (EntityHuman) player;
+		CraftPlayer craft = (CraftPlayer) player;
+		EntityHuman human = craft.getHandle();
 		try {
 			NBTTagCompound nbt = new NBTTagCompound();
 			human.e(nbt);
@@ -76,11 +79,12 @@ public class InventoryManager {
 	}
 	
 	public boolean loadInventory(Player player, String kitName) {
-		if(!(player instanceof EntityHuman)) {
+		if(!(player instanceof CraftPlayer)) {
 			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
 			return false;
 		}
-		EntityHuman human = (EntityHuman) player;
+		CraftPlayer craft = (CraftPlayer) player;
+		EntityPlayer human = craft.getHandle();
 		try {
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
