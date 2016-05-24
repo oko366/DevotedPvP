@@ -60,7 +60,7 @@ public class MapManager implements Listener {
 				}
 			}
 		}
-		lastLocation = new Location(DevotedPvP.getInstance().getSpawnWorld(), 500, 50, 500);
+		lastLocation = new Location(DevotedPvP.getInstance().getEndWorld(), 500, 50, 500);
 	}
 	
 	public void randomSpawnForDuel(Player p1, Player p2) {

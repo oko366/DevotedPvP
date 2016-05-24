@@ -21,12 +21,6 @@ public class InventoryManager {
 	private Database db;
 	private DevotedPvP plugin;
 	
-	private PreparedStatement getInventory;
-	private PreparedStatement addInventory;
-	private PreparedStatement updateOwner;
-	private PreparedStatement deleteInventory;
-	private PreparedStatement updateInventory;
-	
 	private InventoryManager() {
 		plugin = DevotedPvP.getInstance();
 		db = plugin.getDb();
@@ -38,11 +32,6 @@ public class InventoryManager {
 					+ "name VARCHAR(40) UNIQUE NOT NULL,"
 					+ "inv blob,"
 					+ "owner VARCHAR(36) NOT NULL)");
-		getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
-		addInventory = db.prepareStatement("INSERT INTO inventories (name, inv, owner) VALUES (?,?,?)");
-		updateOwner = db.prepareStatement("UPDATE inventories SET owner=? WHERE name=?");
-		deleteInventory = db.prepareStatement("DELETE FROM inventories WHERE name=?");
-		updateInventory = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
 	}
 	
 	public boolean saveInventory(Player player, String kitName) {
@@ -57,17 +46,19 @@ public class InventoryManager {
 			human.e(nbt);
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			NBTCompressedStreamTools.a(nbt, out);
+			PreparedStatement getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
 				if(UUID.fromString(result.getString("owner")).equals(player.getUniqueId())) {
+					PreparedStatement updateInventory = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
 					updateInventory.setBytes(1, out.toByteArray());
 					updateInventory.setString(2, kitName);
 					updateInventory.execute();
 					return true;
 				}
 			}
-			
+			PreparedStatement addInventory = db.prepareStatement("INSERT INTO inventories (name, inv, owner) VALUES (?,?,?)");
 			addInventory.setString(1, kitName);
 			addInventory.setString(3, player.getUniqueId().toString());
 			addInventory.setBytes(2, out.toByteArray());
@@ -87,6 +78,7 @@ public class InventoryManager {
 		CraftPlayer craft = (CraftPlayer) player;
 		EntityPlayer human = craft.getHandle();
 		try {
+			PreparedStatement getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
@@ -106,10 +98,12 @@ public class InventoryManager {
 	
 	public boolean transferInventory(Player owner, Player newOwner, String kitName) {
 		try {
+			PreparedStatement getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
 				if(UUID.fromString(result.getString("owner")).equals(owner.getUniqueId())) {
+					PreparedStatement updateOwner = db.prepareStatement("UPDATE inventories SET owner=? WHERE name=?");
 					updateOwner.setString(1, newOwner.getUniqueId().toString());
 					updateOwner.setString(2, kitName);
 					updateOwner.execute();
@@ -124,6 +118,7 @@ public class InventoryManager {
 	
 	public boolean inventoryExists(String kitName) {
 		try {
+			PreparedStatement getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
 			getInventory.setString(1, kitName);
 			return getInventory.executeQuery().next();
 		} catch (Exception ex) {
@@ -134,10 +129,12 @@ public class InventoryManager {
 	
 	public boolean deleteInventory(Player player, String kitName) {
 		try {
+			PreparedStatement getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
 				if(UUID.fromString(result.getString("owner")).equals(player.getUniqueId())) {
+					PreparedStatement deleteInventory = db.prepareStatement("DELETE FROM inventories WHERE name=?");
 					deleteInventory.setString(1, kitName);
 					deleteInventory.execute();
 					return true;
