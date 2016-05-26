@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.LinkedList;
 import java.util.UUID;
 
 import org.bukkit.Location;
@@ -12,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import net.md_5.bungee.api.ChatColor;
 import net.minecraft.server.v1_9_R1.EntityHuman;
 import net.minecraft.server.v1_9_R1.EntityPlayer;
 import net.minecraft.server.v1_9_R1.NBTCompressedStreamTools;
@@ -23,11 +25,20 @@ public class InventoryManager {
 	
 	private Database db;
 	private DevotedPvP plugin;
+	private LinkedList<String> inventories;
 	
 	private InventoryManager() {
 		plugin = DevotedPvP.getInstance();
 		db = plugin.getDb();
 		setupTables();
+		inventories = new LinkedList<String>();
+		try {
+			PreparedStatement getAll = db.prepareStatement("SELECT * FROM inventories");
+			ResultSet result = getAll.executeQuery();
+			while(result.next()) {
+				inventories.add(result.getString("name"));
+			}
+		} catch (Exception ex) {}
 	}
 	
 	private void setupTables() {
@@ -41,6 +52,9 @@ public class InventoryManager {
 		if(!(player instanceof CraftPlayer)) {
 			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
 			return false;
+		}
+		if(kitName.length() > 40) {
+			kitName = kitName.substring(0, 40);
 		}
 		CraftPlayer craft = (CraftPlayer) player;
 		EntityHuman human = craft.getHandle();
@@ -60,6 +74,9 @@ public class InventoryManager {
 					updateInventory.execute();
 					return true;
 				}
+			}
+			if(!inventories.contains(kitName)) {
+				inventories.add(kitName);
 			}
 			PreparedStatement addInventory = db.prepareStatement("INSERT INTO inventories (name, inv, owner) VALUES (?,?,?)");
 			addInventory.setString(1, kitName);
@@ -164,6 +181,16 @@ public class InventoryManager {
 			ex.printStackTrace();
 		}
 		return false;
+	}
+	
+	public void listInventories(Player player, int page) {
+		String msg = ChatColor.GREEN + "Inventories (page " + page + " /" + inventories.size() / 10 + "): ";
+		for(int i = 0; i < 10; i ++) {
+			int a = i + (10 * (page - 1));
+			if(a >= inventories.size()) break;
+			msg += inventories.get(i) + ", ";
+		}
+		player.sendMessage(msg.substring(0, msg.length() - 2));
 	}
 	
 	public static InventoryManager getInstance() {

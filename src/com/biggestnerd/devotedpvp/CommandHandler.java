@@ -21,7 +21,7 @@ public class CommandHandler implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(sender instanceof Player) {
 			Player player = (Player) sender;
-			if(!(label.equals("forfeit") || label.equals("elo") || label.equals("wand") || label.equals("structure")) && !player.hasPermission("pvp.admin")) {
+			if(!(label.equals("forfeit") || label.equals("elo") || label.equals("wand") || label.equals("structure")) && !player.hasPermission("pvp.badmin")) {
 				if(!plugin.inSpawn(player)) {
 					player.sendMessage(ChatColor.RED + "You can only use that command in spawn");
 					return true;
@@ -57,10 +57,10 @@ public class CommandHandler implements CommandExecutor {
 			if(args.length < 2) {
 				player.sendMessage(ChatColor.RED + "Invalid arguments, do /inv save inventory");
 			} else {
-				if(InventoryManager.getInstance().saveInventory(player, args[1])) {
+				if(plugin.getInventoryManager().saveInventory(player, args[1])) {
 					player.sendMessage(ChatColor.GREEN + "Inventory successfully saved: " + args[1]);
 				} else {
-					if(InventoryManager.getInstance().inventoryExists(args[1])) {
+					if(plugin.getInventoryManager().inventoryExists(args[1])) {
 						player.sendMessage(ChatColor.RED + "You can't save an inventory you don't own!");
 					} else {
 						player.sendMessage(ChatColor.RED + "An error occurred, contact an administrator.");
@@ -72,7 +72,7 @@ public class CommandHandler implements CommandExecutor {
 			if(args.length < 2) {
 				player.sendMessage(ChatColor.RED + "Invalid arguments, do /inv load inventory");
 			} else {
-				if(InventoryManager.getInstance().loadInventory(player, args[1])) {
+				if(plugin.getInventoryManager().loadInventory(player, args[1])) {
 					player.sendMessage(ChatColor.GREEN + "Inventory successfully loaded: " + args[1]);
 				} else {
 					player.sendMessage(ChatColor.RED + "Invalid inventory name");
@@ -91,13 +91,13 @@ public class CommandHandler implements CommandExecutor {
 				String inv = args[1];
 				Player owner = Bukkit.getPlayer(args[2]);
 				if(owner != null) {
-					if(InventoryManager.getInstance().transferInventory(player, owner, inv)) {
+					if(plugin.getInventoryManager().transferInventory(player, owner, inv)) {
 						player.sendMessage(ChatColor.GREEN + "Ownership of " + inv + " transferred to " + owner.getName());
 						if(owner.isOnline()) {
 							owner.getPlayer().sendMessage(ChatColor.GREEN + player.getName() + " has transferred the inventory " + inv + " to you");
 						}
 					} else {
-						if(InventoryManager.getInstance().inventoryExists(args[1])) {
+						if(plugin.getInventoryManager().inventoryExists(args[1])) {
 							player.sendMessage(ChatColor.RED + "You can't transfer an inventory you don't own!");
 						} else {
 							player.sendMessage(ChatColor.RED + "An error occurred, contact an administrator.");
@@ -112,15 +112,25 @@ public class CommandHandler implements CommandExecutor {
 			if(args.length < 2) {
 				player.sendMessage(ChatColor.RED + "Invalid arguments, do /inv del inventory");
 			} else {
-				if(InventoryManager.getInstance().deleteInventory(player, args[1])) {
+				if(plugin.getInventoryManager().deleteInventory(player, args[1])) {
 					player.sendMessage(ChatColor.GREEN + "Successfully deleted inventory " + args[1]);
 				} else {
-					if(InventoryManager.getInstance().inventoryExists(args[1])) {
+					if(plugin.getInventoryManager().inventoryExists(args[1])) {
 						player.sendMessage(ChatColor.RED + "You can't delete an inventory you don't own!");
 					} else {
 						player.sendMessage(ChatColor.RED + "An error occurred, contact an administrator.");
 					}
 				}
+			}
+		case "list":
+			if(!player.hasPermission("pvp.badmin")) {
+				player.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
+			} else {
+				int page = 1;
+				try {
+					page = Integer.parseInt(args[1]);
+				} catch (Exception ex) {} //if it's out of bounds or not a number just use 1
+				plugin.getInventoryManager().listInventories(player, page);
 			}
 		}
 		return true;
