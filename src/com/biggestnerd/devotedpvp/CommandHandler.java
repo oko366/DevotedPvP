@@ -122,6 +122,7 @@ public class CommandHandler implements CommandExecutor {
 					}
 				}
 			}
+			break;
 		case "list":
 			if(!player.hasPermission("pvp.badmin")) {
 				player.sendMessage(ChatColor.RED + "You do not have permission to use this command!");
@@ -132,6 +133,7 @@ public class CommandHandler implements CommandExecutor {
 				} catch (Exception ex) {} //if it's out of bounds or not a number just use 1
 				plugin.getInventoryManager().listInventories(player, page);
 			}
+			break;
 		}
 		return true;
 	}

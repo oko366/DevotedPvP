@@ -174,6 +174,7 @@ public class InventoryManager {
 					PreparedStatement deleteInventory = db.prepareStatement("DELETE FROM inventories WHERE name=?");
 					deleteInventory.setString(1, kitName);
 					deleteInventory.execute();
+					inventories.remove(kitName);
 					return true;
 				}
 			}
