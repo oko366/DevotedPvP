@@ -6,8 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
 
+import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import net.minecraft.server.v1_9_R1.EntityHuman;
 import net.minecraft.server.v1_9_R1.EntityPlayer;
@@ -75,6 +78,7 @@ public class InventoryManager {
 			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
 			return false;
 		}
+		Location start = player.getLocation();
 		CraftPlayer craft = (CraftPlayer) player;
 		EntityPlayer human = craft.getHandle();
 		try {
@@ -88,12 +92,28 @@ public class InventoryManager {
 				if(nbt != null) {
 					human.f(nbt);
 				}
+				new TeleportTask(player, start).runTaskLater(plugin, 1l);
 				return true;
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 		return false;
+	}
+	
+	class TeleportTask extends BukkitRunnable {
+		private Player player;
+		private Location loc;
+		
+		public TeleportTask(Player player, Location loc) {
+			this.loc = loc;
+			this.player = player;
+		}
+		
+		@Override
+		public void run() {
+			player.teleport(loc, TeleportCause.PLUGIN);
+		}
 	}
 	
 	public boolean transferInventory(Player owner, Player newOwner, String kitName) {
