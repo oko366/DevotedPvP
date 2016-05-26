@@ -18,10 +18,10 @@ public class TeamManager {
 	
 	public void updateNameTag(Player player) {
 		if(!teams.containsKey(player)) {
-			player.setDisplayName(ChatColor.stripColor(player.getDisplayName()));
+			player.setDisplayName(player.getName());
 			return;
 		}
-		player.setDisplayName(teams.get(player.getUniqueId()) + player.getDisplayName());
+		player.setDisplayName(teams.get(player.getUniqueId()).getChar() + player.getName());
 	}
 	
 	public void handleTeamChange(Player player, ChatColor color) {

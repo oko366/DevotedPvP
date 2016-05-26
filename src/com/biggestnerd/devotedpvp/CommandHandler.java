@@ -21,7 +21,7 @@ public class CommandHandler implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(sender instanceof Player) {
 			Player player = (Player) sender;
-			if(!(label.equals("forfeit") || label.equals("elo") || label.equals("wand") || label.equals("structure"))) {
+			if(!(label.equals("forfeit") || label.equals("elo") || label.equals("wand") || label.equals("structure")) && !player.hasPermission("pvp.admin")) {
 				if(!plugin.inSpawn(player)) {
 					player.sendMessage(ChatColor.RED + "You can only use that command in spawn");
 					return true;

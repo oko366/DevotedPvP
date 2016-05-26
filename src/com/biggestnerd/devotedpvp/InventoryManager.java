@@ -153,7 +153,7 @@ public class InventoryManager {
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
 			if(result.next()) {
-				if(UUID.fromString(result.getString("owner")).equals(player.getUniqueId())) {
+				if(UUID.fromString(result.getString("owner")).equals(player.getUniqueId()) || player.hasPermission("pvp.badmin")) {
 					PreparedStatement deleteInventory = db.prepareStatement("DELETE FROM inventories WHERE name=?");
 					deleteInventory.setString(1, kitName);
 					deleteInventory.execute();

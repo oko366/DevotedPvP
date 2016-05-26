@@ -15,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.potion.PotionEffect;
 
 import com.bobacadodl.imgmessage.ImageChar;
 import com.bobacadodl.imgmessage.ImageMessage;
@@ -65,6 +66,9 @@ public class KillStreakManager implements Listener {
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		event.setDeathMessage("");
 		Player player = event.getEntity();
+		for(PotionEffect effect : player.getActivePotionEffects()) {
+			player.removePotionEffect(effect.getType());
+		}
 		player.getWorld().strikeLightning(player.getLocation().add(0, 100, 0));
 		if(faces.containsKey(player.getUniqueId())) {
 			BufferedImage face = faces.get(player.getUniqueId());
