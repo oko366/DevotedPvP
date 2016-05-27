@@ -265,15 +265,19 @@ public class DuelManager implements Listener {
 				while(!found) {
 					low--;
 					high--;
-					match = rankings.get(low);
-					if(queue.contains(match)) {
-						found = true;
-						break;
+					if(low > 0) {
+						match = rankings.get(low);
+						if(queue.contains(match)) {
+							found = true;
+							break;
+						}
 					}
-					match = rankings.get(high);
-					if(queue.contains(match)) {
-						found = true;
-						break;
+					if(high < rankings.size()) {
+						match = rankings.get(high);
+						if(queue.contains(match)) {
+							found = true;
+							break;
+						}
 					}
 				}
 				if(match != null) {

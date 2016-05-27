@@ -79,7 +79,7 @@ public class CommandHandler implements CommandExecutor {
 				}
 			}
 			break;
-		case "clear:": 
+		case "clear": 
 			player.getInventory().clear();
 			player.getInventory().setArmorContents(null);
 			player.sendMessage(ChatColor.GREEN + "Inventory cleared!");
@@ -227,12 +227,12 @@ public class CommandHandler implements CommandExecutor {
 				plugin.getTeamManager().clearTeam(player);
 				player.sendMessage(ChatColor.GREEN + "You are not longer on a team");
 			} else {
-				ChatColor team = ChatColor.valueOf(color);
-				if(team == null) {
-					player.sendMessage(ChatColor.RED + color + " is not a valid team");
-				} else {
+				try {
+					ChatColor team = ChatColor.valueOf(color);
 					plugin.getTeamManager().handleTeamChange(player, team);
 					player.sendMessage("You are now on the " + team + color + ChatColor.WHITE + " team");
+				}catch (Exception ex) {
+					player.sendMessage(ChatColor.RED + color + " is not a valid team");
 				}
 			}
 		}
