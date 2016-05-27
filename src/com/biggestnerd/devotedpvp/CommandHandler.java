@@ -165,24 +165,24 @@ public class CommandHandler implements CommandExecutor {
 			if(accepted == null) {
 				player.sendMessage(ChatColor.RED + "Player not found, you can't accept duels with players who don't exist");
 			} else {
-				plugin.getDuelManager().acceptDuel((Player)player, accepted);
+				plugin.getDuelManager().acceptDuel(player, accepted);
 			}
 		}
 		return true;
 	}
 	
 	private boolean handleForfeitCommand(Player player) {
-		plugin.getDuelManager().forfeitDuel((Player)player);
+		plugin.getDuelManager().forfeitDuel(player);
 		return true;
 	}
 	
 	private boolean handleEloCommand(Player player) {
-		plugin.getDuelManager().sendEloMessage((Player)player);
+		plugin.getDuelManager().sendEloMessage(player);
 		return true;
 	}
 	
 	private boolean handleWandCommand(Player player) {
-		plugin.getMapManager().giveWand((Player)player);
+		plugin.getMapManager().giveWand(player);
 		return true;
 	}
 	
@@ -190,7 +190,7 @@ public class CommandHandler implements CommandExecutor {
 		if(args.length == 0) {
 			player.sendMessage(ChatColor.RED + "Invalid arguments, do /structure name");
 		} else {
-			plugin.getMapManager().makeStructure((Player)player, args[0]);
+			plugin.getMapManager().makeStructure(player, args[0]);
 		}
 		return true;
 	}

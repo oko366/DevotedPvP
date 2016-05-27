@@ -37,10 +37,10 @@ public class DevotedPvP extends JavaPlugin {
 		mapMan = MapManager.getInstance();
 		teamMan = TeamManager.getInstance();
 		killMan = KillStreakManager.getInstance();
+		setupSpawnLocations();
 		getServer().getPluginManager().registerEvents(mapMan, this);
 		getServer().getPluginManager().registerEvents(duelMan, this);
 		getServer().getPluginManager().registerEvents(killMan, this);
-		setupSpawnLocations();
 	}
 	
 	private void initializeDb() {

@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,8 +19,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import net.md_5.bungee.api.ChatColor;
 
 public class DuelManager implements Listener {
 
@@ -34,10 +33,6 @@ public class DuelManager implements Listener {
 	private HashMap<UUID, Integer> eloCache;
 	private HashMap<UUID, LinkedList<UUID>> requestedDuels;
 	private LinkedList<UUID> rankings;
-	
-	private PreparedStatement joinStatement;
-	private PreparedStatement getRank;
-	private PreparedStatement updateRank;
 	
 	private DuelManager() {
 		plugin = DevotedPvP.getInstance();
@@ -56,13 +51,11 @@ public class DuelManager implements Listener {
 		db.execute("CREATE TABLE IF NOT EXISTS elo ("
 				+ "player VARCHAR(36) UNIQUE NOT NULL,"
 				+ "rank INT)");
-		joinStatement = db.prepareStatement("INSERT INTO elo (player,rank) VALUES (?,1000)");
-		getRank = db.prepareStatement("SELECT * FROM elo WHERE player=?");
-		updateRank = db.prepareStatement("UPDATE elo SET rank=? WHERE player=?");
 	}
 	
 	public void playerFirstJoin(UUID id) {
 		try {
+			PreparedStatement joinStatement = db.prepareStatement("INSERT INTO elo (player,rank) VALUES (?,1000)");
 			joinStatement.setString(1, id.toString());
 			joinStatement.executeUpdate();
 		} catch (Exception ex) {
@@ -72,6 +65,7 @@ public class DuelManager implements Listener {
 	
 	public void playerWinDuel(Player winner, Player loser) {
 		try {
+			PreparedStatement getRank = db.prepareStatement("SELECT * FROM elo WHERE player=?");
 			getRank.setString(1, winner.getUniqueId().toString());
 			ResultSet result = getRank.executeQuery();
 			int winRank = 0;
@@ -85,6 +79,7 @@ public class DuelManager implements Listener {
 				loseRank = result.getInt("rank");
 			}
 			if(loseRank != 0 && winRank != 0) {
+				PreparedStatement updateRank = db.prepareStatement("UPDATE elo SET rank=? WHERE player=?");
 				int e = 1 / (10 - (winRank - loseRank) + 1);
 				int newWinElo = winRank + 32 * (1-e);
 				updateRank.setInt(1, newWinElo);
@@ -106,6 +101,7 @@ public class DuelManager implements Listener {
 	public int getElo(UUID id) {
 		if(!eloCache.containsKey(id)) {
 			try {
+				PreparedStatement getRank = db.prepareStatement("SELECT * FROM elo WHERE player=?");
 				getRank.setString(1, id.toString());
 				ResultSet result = getRank.executeQuery();
 				if(result.next()) {
@@ -128,12 +124,11 @@ public class DuelManager implements Listener {
 		int elo = getElo(uuid);
 		ListIterator<UUID> iter = rankings.listIterator();
 		while(iter.hasNext()) {
-			iter.next();
+			UUID u = iter.next();
 			if(!iter.hasNext()) {
 				rankings.addLast(uuid);
 				break;
 			}
-			UUID u = iter.next();
 			if(getElo(u) > elo) {
 				iter.previous();
 				iter.add(uuid);
@@ -162,7 +157,7 @@ public class DuelManager implements Listener {
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		UUID id = event.getEntity().getUniqueId();
 		if(dueling.containsKey(id)) {
-			boolean ranked = event.getEntity().getMetadata("lore").get(0).asBoolean();
+			boolean ranked = event.getEntity().getMetadata("ranked").get(0).asBoolean();
 			if(ranked) {
 				endRankedMatch(dueling.get(id), id);
 			} else {
@@ -249,7 +244,7 @@ public class DuelManager implements Listener {
 	}
 	
 	public void sendEloMessage(Player player) {
-		player.sendMessage(ChatColor.GOLD + "Your elo is " + getElo(player.getUniqueId()) + " and you're ranked #" + rankings.indexOf(player.getUniqueId()));
+		player.sendMessage(ChatColor.GOLD + "Your elo is " + getElo(player.getUniqueId()) + " and you're ranked #" + (int)(rankings.indexOf(player.getUniqueId()) + 2));
 	}
 	
 	public boolean isInDuel(UUID player) {

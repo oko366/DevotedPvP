@@ -41,6 +41,10 @@ commands:
     description: Change your team
     usage: /team <color>
     permission: pvp.use
+  spectate:
+    description: Spectate another player
+    usage: /spectate <player>
+    permission: pvp.use
 
 permissions:
   pvp.use:

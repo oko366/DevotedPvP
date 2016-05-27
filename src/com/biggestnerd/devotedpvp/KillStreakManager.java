@@ -35,7 +35,7 @@ public class KillStreakManager implements Listener {
 		streaks = new HashMap<UUID, Integer>();
 		faces = new HashMap<UUID, BufferedImage>();
 		rng = new Random();
-		messageExtras = (String[])DevotedPvP.getInstance().getConfig().getStringList("deathmessages").toArray();
+		messageExtras = DevotedPvP.getInstance().getConfig().getStringList("deathmessages").toArray(new String[0]);
 	}
 	
 	public int getKillStreak(Player player) {

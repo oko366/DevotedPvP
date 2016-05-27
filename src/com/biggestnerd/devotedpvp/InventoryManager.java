@@ -185,7 +185,7 @@ public class InventoryManager {
 	}
 	
 	public void listInventories(Player player, int page) {
-		String msg = ChatColor.GREEN + "Inventories (page " + page + "/" + (inventories.size() / 10) + 1 + "): ";
+		String msg = ChatColor.GREEN + "Inventories (page " + page + "/" + (int)((inventories.size() / 10) + 1) + "): ";
 		for(int i = 0; i < 10; i ++) {
 			int a = i + (10 * (page - 1));
 			if(a >= inventories.size()) break;
