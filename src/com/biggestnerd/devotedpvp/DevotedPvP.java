@@ -63,6 +63,8 @@ public class DevotedPvP extends JavaPlugin {
 		getCommand("forfeit").setExecutor(cHandler);
 		getCommand("wand").setExecutor(cHandler);
 		getCommand("structure").setExecutor(cHandler);
+		getCommand("spectate").setExecutor(cHandler);
+		getCommand("team").setExecutor(cHandler);
 	}
 	
 	private void setupSpawnLocations() {
