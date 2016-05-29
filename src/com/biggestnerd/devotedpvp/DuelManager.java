@@ -3,7 +3,7 @@ package com.biggestnerd.devotedpvp;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -31,8 +31,8 @@ public class DuelManager implements Listener {
 	private HashMap<UUID, UUID> dueling;
 	private ConcurrentLinkedQueue<UUID> queue;
 	private HashMap<UUID, Integer> eloCache;
-	private HashMap<UUID, LinkedList<UUID>> requestedDuels;
-	private LinkedList<UUID> rankings;
+	private HashMap<UUID, ArrayList<UUID>> requestedDuels;
+	private ArrayList<UUID> rankings;
 	
 	private DuelManager() {
 		plugin = DevotedPvP.getInstance();
@@ -41,8 +41,8 @@ public class DuelManager implements Listener {
 		eloCache = new HashMap<UUID, Integer>();
 		queue = new ConcurrentLinkedQueue<UUID>();
 		dueling = new HashMap<UUID, UUID>();
-		rankings = new LinkedList<UUID>();
-		requestedDuels = new HashMap<UUID, LinkedList<UUID>>();
+		rankings = new ArrayList<UUID>();
+		requestedDuels = new HashMap<UUID, ArrayList<UUID>>();
 		queueThread = new QueueThread();
 		queueThread.runTaskTimer(plugin, 1l, 1l);
 	}
@@ -126,7 +126,7 @@ public class DuelManager implements Listener {
 		while(iter.hasNext()) {
 			UUID u = iter.next();
 			if(!iter.hasNext()) {
-				rankings.addLast(uuid);
+				rankings.add(uuid);
 				break;
 			}
 			if(getElo(u) > elo) {
@@ -149,7 +149,12 @@ public class DuelManager implements Listener {
 		eloCache.remove(id);
 		queue.remove(id);
 		if(dueling.containsKey(id)) {
-			endRankedMatch(dueling.get(id), id);
+			boolean ranked = event.getPlayer().getMetadata("ranked").get(0).asBoolean();
+			if(ranked) {
+				endRankedMatch(dueling.get(id), id);
+			} else {
+				endDuel(dueling.get(id), id);
+			}
 		}
 	}
 	
@@ -200,9 +205,9 @@ public class DuelManager implements Listener {
 	
 	public void requestDuel(Player player, Player request) {
 		if(!requestedDuels.containsKey(player.getUniqueId())) {
-			requestedDuels.put(player.getUniqueId(), new LinkedList<UUID>());
+			requestedDuels.put(player.getUniqueId(), new ArrayList<UUID>());
 		}
-		requestedDuels.get(player).addLast(request.getUniqueId());
+		requestedDuels.get(player.getUniqueId()).add(request.getUniqueId());
 		request.sendMessage(ChatColor.GOLD + player.getName() + " has requested a duel with you, type /accept " + player.getName() + " to accept the duel.");
 	}
 	
@@ -219,7 +224,7 @@ public class DuelManager implements Listener {
 			player.sendMessage(ChatColor.RED + "Nobody has requested a duel with you");
 			return;
 		}
-		startDuel(player, Bukkit.getPlayer(requestedDuels.get(player.getUniqueId()).getLast()), false);
+		startDuel(player, Bukkit.getPlayer(requestedDuels.get(player.getUniqueId()).get(requestedDuels.get(player.getUniqueId()).size() - 1)), false);
 	}
 	
 	public void forfeitDuel(Player player) {
@@ -244,7 +249,14 @@ public class DuelManager implements Listener {
 	}
 	
 	public void sendEloMessage(Player player) {
-		player.sendMessage(ChatColor.GOLD + "Your elo is " + getElo(player.getUniqueId()) + " and you're ranked #" + (int)(rankings.indexOf(player.getUniqueId()) + 2));
+		int rank = 0;
+		for(int i = 0; i < rankings.size(); i++) {
+			if(rankings.get(i).equals(player.getUniqueId())) {
+				rank = i + 1;
+				break;
+			}
+		}
+		player.sendMessage(ChatColor.GOLD + "Your elo is " + getElo(player.getUniqueId()) + " and you're ranked #" + rank);
 	}
 	
 	public boolean isInDuel(UUID player) {
@@ -261,16 +273,21 @@ public class DuelManager implements Listener {
 				int high = rankings.indexOf(id);
 				int low = high;
 				boolean found = false;
+				boolean tooLow = false;
+				boolean tooHigh= false;
 				UUID match = null;
 				while(!found) {
-					low--;
-					high--;
+					if(tooHigh && tooLow) break;
+					if(!tooLow) low--;
+					if(!tooHigh) high++;
 					if(low > 0) {
 						match = rankings.get(low);
 						if(queue.contains(match)) {
 							found = true;
 							break;
 						}
+					} else {
+						tooLow = true;
 					}
 					if(high < rankings.size()) {
 						match = rankings.get(high);
@@ -278,6 +295,8 @@ public class DuelManager implements Listener {
 							found = true;
 							break;
 						}
+					} else {
+						tooHigh = true;
 					}
 				}
 				if(match != null) {

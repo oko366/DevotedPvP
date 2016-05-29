@@ -7,15 +7,13 @@ import java.sql.ResultSet;
 import java.util.LinkedList;
 import java.util.UUID;
 
-import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import net.md_5.bungee.api.ChatColor;
 import net.minecraft.server.v1_9_R1.EntityHuman;
 import net.minecraft.server.v1_9_R1.EntityPlayer;
+import net.minecraft.server.v1_9_R1.NBTBase;
 import net.minecraft.server.v1_9_R1.NBTCompressedStreamTools;
 import net.minecraft.server.v1_9_R1.NBTTagCompound;
 
@@ -39,6 +37,7 @@ public class InventoryManager {
 				inventories.add(result.getString("name"));
 			}
 		} catch (Exception ex) {}
+		fixVersion();
 	}
 	
 	private void setupTables() {
@@ -46,6 +45,50 @@ public class InventoryManager {
 					+ "name VARCHAR(40) UNIQUE NOT NULL,"
 					+ "inv blob,"
 					+ "owner VARCHAR(36) NOT NULL)");
+		db.execute("CREATE TABLE IF NOT EXISTS db_version (db_version int not null," +
+						"update_time varchar(24),"
+						+ "plugin_name varchar(40))");
+	}
+	
+	private void fixVersion() {
+		int version = getVersion();
+		if(version == 0) {
+			try {
+				PreparedStatement getInventories = db.prepareStatement("SELECT * FROM inventories");
+				ResultSet result = getInventories.executeQuery();
+				while(result.next()) {
+					ByteArrayInputStream input = new ByteArrayInputStream(result.getBytes("inv"));
+					NBTTagCompound nbt = NBTCompressedStreamTools.a(input);
+					NBTBase inv = nbt.get("Inventory");
+					NBTTagCompound parent = new NBTTagCompound();
+					parent.set("inventory", inv);
+					PreparedStatement updateInventory = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
+					ByteArrayOutputStream output = new ByteArrayOutputStream();
+					NBTCompressedStreamTools.a(parent, output);
+					updateInventory.setString(1, result.getString("name"));
+					updateInventory.setBytes(2, output.toByteArray());
+					updateInventory.execute();
+				}
+				db.execute("UPDATE db_version SET db_version=1 WHERE plugin_name='DevotedPvP'");
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+	
+	private int getVersion() {
+		try {
+			PreparedStatement getVersion = db.prepareStatement("SELECT * FROM db_version WHERE plugin_name='DevotedPvP'");
+			ResultSet set = getVersion.executeQuery();
+			if(set.next()) {
+				return set.getInt("db_version");
+			} else {
+				return 0;
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return 0;
 	}
 	
 	public boolean saveInventory(Player player, String kitName) {
@@ -61,8 +104,10 @@ public class InventoryManager {
 		try {
 			NBTTagCompound nbt = new NBTTagCompound();
 			human.e(nbt);
+			NBTTagCompound invNBT = new NBTTagCompound();
+			invNBT.set("inventory", nbt.get("Inventory"));
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			NBTCompressedStreamTools.a(nbt, out);
+			NBTCompressedStreamTools.a(invNBT, out);
 			PreparedStatement getInventory = db.prepareStatement("SELECT * FROM inventories WHERE name=?");
 			getInventory.setString(1, kitName);
 			ResultSet result = getInventory.executeQuery();
@@ -95,7 +140,6 @@ public class InventoryManager {
 			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
 			return false;
 		}
-		Location start = player.getLocation();
 		CraftPlayer craft = (CraftPlayer) player;
 		EntityPlayer human = craft.getHandle();
 		try {
@@ -106,31 +150,19 @@ public class InventoryManager {
 				NBTTagCompound nbt = null;
 				ByteArrayInputStream input = new ByteArrayInputStream(result.getBytes("inv"));
 				nbt = NBTCompressedStreamTools.a(input);
-				if(nbt != null) {
-					human.f(nbt);
-				}
-				new TeleportTask(player, start).runTaskLater(plugin, 1l);
+				if(nbt == null) {
+					return false;
+				}	
+				NBTTagCompound parent = new NBTTagCompound();
+				human.e(parent);
+				parent.set("Inventory", nbt.get("inventory"));
+				human.f(parent);
 				return true;
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 		return false;
-	}
-	
-	class TeleportTask extends BukkitRunnable {
-		private Player player;
-		private Location loc;
-		
-		public TeleportTask(Player player, Location loc) {
-			this.loc = loc;
-			this.player = player;
-		}
-		
-		@Override
-		public void run() {
-			player.teleport(loc, TeleportCause.PLUGIN);
-		}
 	}
 	
 	public boolean transferInventory(Player owner, Player newOwner, String kitName) {
@@ -185,11 +217,13 @@ public class InventoryManager {
 	}
 	
 	public void listInventories(Player player, int page) {
-		String msg = ChatColor.GREEN + "Inventories (page " + page + "/" + (int)((inventories.size() / 10) + 1) + "): ";
+		int pages = (inventories.size() / 10) + 1;
+		if(page > pages) page = 1;
+		String msg = ChatColor.GREEN + "Inventories (page " + page + "/" + pages + "): ";
 		for(int i = 0; i < 10; i ++) {
 			int a = i + (10 * (page - 1));
 			if(a >= inventories.size()) break;
-			msg += inventories.get(i) + ", ";
+			msg += inventories.get(a) + ", ";
 		}
 		player.sendMessage(msg.substring(0, msg.length() - 2));
 	}

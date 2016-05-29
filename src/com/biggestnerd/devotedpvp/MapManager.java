@@ -1,10 +1,9 @@
 package com.biggestnerd.devotedpvp;
 
-import java.io.File;
-import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.UUID;
@@ -22,50 +21,60 @@ import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import com.biggestnerd.devotedpvp.MapStructure.InternalLocation;
+
 public class MapManager implements Listener {
 	
 	private static MapManager instance;
 	
 	private HashMap<UUID, Location> posOnes;
 	private HashMap<UUID, Location> posTwos;
-	private HashMap<UUID, Location> spawnOnes;
-	private HashMap<UUID, Location> spawnTwos;
 	
-	private HashSet<MapStructure> structures;
-	private HashMap<Location, MapStructure> mapLocations;
+	private HashMap<String, MapStructure> structures;
+	private HashMap<Location, String> mapLocations;
 	private HashMap<Location, Boolean> inUse;
 	private HashMap<UUID, Location> users;
 	private Location lastLocation;
 	private Random rng;
-	private File structureDir;
+	private Database db;
 	
 	private MapManager() {
-		structures = new HashSet<MapStructure>();
+		db = DevotedPvP.getInstance().getDb();
+		MapStructure.setupWorldEditAdapter();
+		structures = new HashMap<String, MapStructure>();
 		inUse = new HashMap<Location, Boolean>();
-		mapLocations = new HashMap<Location, MapStructure>();
+		mapLocations = new HashMap<Location, String>();
 		rng = new Random();
 		posOnes = new HashMap<UUID, Location>();
 		posTwos = new HashMap<UUID, Location>();
-		spawnOnes = new HashMap<UUID, Location>();
-		spawnTwos = new HashMap<UUID, Location>();
 		users = new HashMap<UUID, Location>();
-		structureDir = new File(DevotedPvP.getInstance().getDataFolder(), "structures");
-		if(!structureDir.exists()) {
-			structureDir.mkdirs();
-		} else {
-			for(File f : structureDir.listFiles()) {
-				MapStructure structure = MapStructure.load(f);
-				if(structure != null) {
-					structures.add(structure);
-				}
+		initializeTables();
+		loadCache();
+		lastLocation = new Location(DevotedPvP.getInstance().getSpawnWorld(), 0, 70, 2500);
+	}
+	
+	private void initializeTables() {
+		db.execute("CREATE TABLE IF NOT EXISTS maps (name varchar(40) unique not null, x1 int, x2 int, y1 int, y2 int, z1 int, z2 int)");
+	}
+	
+	private void loadCache() {
+		try {
+			PreparedStatement getMaps = db.prepareStatement("SELECT * FROM maps");
+			ResultSet result = getMaps.executeQuery();
+			while(result.next()) {
+				String name = result.getString("name");
+				InternalLocation spawn1 = new InternalLocation(result.getInt("x1"), result.getInt("y1"), result.getInt("z1"));
+				InternalLocation spawn2 = new InternalLocation(result.getInt("x2"), result.getInt("y2"), result.getInt("z2"));
+				structures.put(name, new MapStructure(name, spawn1, spawn2));
 			}
+		} catch (Exception ex) { 
+			ex.printStackTrace();
 		}
-		lastLocation = new Location(DevotedPvP.getInstance().getEndWorld(), 500, 50, 500);
 	}
 	
 	public void randomSpawnForDuel(Player p1, Player p2) {
 		Location loc = getNextUnusedLocation();
-		MapStructure structure = mapLocations.get(loc);
+		MapStructure structure = structures.get(mapLocations.get(loc));
 		Location firstSpawn = structure.getFirstSpawn().getRelativeTo(loc.getBlock()).getLocation();
 		Location secondSpawn = structure.getSecondSpawn().getRelativeTo(loc.getBlock()).getLocation();
 		p1.teleport(firstSpawn, TeleportCause.PLUGIN);
@@ -90,8 +99,8 @@ public class MapManager implements Listener {
 				return loc;
 			}
 		}
-		MapStructure[] entries = (MapStructure[]) structures.toArray();
-		MapStructure structure = entries[rng.nextInt(entries.length)];
+		String[] entries = structures.keySet().toArray(new String[0]);
+		String structure = entries[rng.nextInt(entries.length)];
 		int amt = 300 * mult++;
 		Location next = lastLocation;
 		if(!x) {
@@ -107,14 +116,14 @@ public class MapManager implements Listener {
 		}
 		mapLocations.put(next, structure);
 		inUse.put(next, true);
-		structure.loadAtLocation(next);
+		structures.get(structure).loadAtLocation(next);
 		return next;
 	}
 	
 	private void removeStructures() {
 		for(Location loc : mapLocations.keySet()) {
-			MapStructure map = mapLocations.get(loc);
-			map.remove(loc);
+			MapStructure map = structures.get(mapLocations.get(loc));
+			map.unload(loc);
 		}
 	}
 	
@@ -130,18 +139,13 @@ public class MapManager implements Listener {
 			if(item.getType() == Material.STICK && item.getItemMeta().getLore().contains(ChatColor.GOLD + "this is a wand")) {
 				UUID id = event.getPlayer().getUniqueId();
 				if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-					if(event.getPlayer().isSneaking()) {
-						spawnOnes.put(id, event.getClickedBlock().getLocation());
-					} else {
-						posOnes.put(id, event.getClickedBlock().getLocation());
-					}
+					posOnes.put(id, event.getClickedBlock().getLocation());
+					event.getPlayer().sendMessage(ChatColor.DARK_AQUA + "Spawn position one set!");
 				}
 				if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
-					if(event.getPlayer().isSneaking()) {
-						spawnTwos.put(id, event.getClickedBlock().getLocation());
-					} else {
-						posTwos.put(id, event.getClickedBlock().getLocation());
-					}
+					posTwos.put(id, event.getClickedBlock().getLocation());
+					event.setCancelled(true);
+					event.getPlayer().sendMessage(ChatColor.DARK_AQUA + "Spawn position two set!");
 				}
 			}
 		}
@@ -149,19 +153,32 @@ public class MapManager implements Listener {
 	
 	public void makeStructure(Player player, String name) {
 		UUID id = player.getUniqueId();
-		if(!(spawnOnes.containsKey(id) && posOnes.containsKey(id) && spawnTwos.containsKey(id) && posTwos.containsKey(id))) {
-			player.sendMessage(ChatColor.RED + "You must specify four positions to create a structure");
+		if(!(posOnes.containsKey(id) && posTwos.containsKey(id))) {
+			player.sendMessage(ChatColor.RED + "You must specify spawn positions to create a structure");
 		} else {
-			MapStructure structure = new MapStructure(name, posOnes.get(id), posTwos.get(id), spawnOnes.get(id), spawnTwos.get(id));
-			structures.add(structure);
-			File file = new File(structureDir, name + ".mbs");
-			if(!file.isFile()) {
-				try {
-					file.createNewFile();
-					structure.save(file);
-				} catch (IOException ex) {
-					ex.printStackTrace();
-				}
+			try {
+				Location pos = player.getLocation();
+				Location posOne = posOnes.get(id);
+				Location posTwo = posTwos.get(id);
+				int x1 = Math.abs(posOne.getBlockX() -  pos.getBlockX());
+				int y1 = Math.abs(posOne.getBlockY() - pos.getBlockY());
+				int z1 = Math.abs(posOne.getBlockZ() - pos.getBlockZ());
+				int x2 = Math.abs(posTwo.getBlockX() -  pos.getBlockX());
+				int y2 = Math.abs(posTwo.getBlockY() - pos.getBlockY());
+				int z2 = Math.abs(posTwo.getBlockZ() - pos.getBlockZ());
+				MapStructure structure = new MapStructure(name, new InternalLocation(x1, y1, z1), new InternalLocation(x2, y2, z2));
+				PreparedStatement insert = db.prepareStatement("INSERT INTO maps (name,x1,y1,z1,x2,y2,z2) VALUES (?,?,?,?,?,?,?)");
+				insert.setString(1, name);
+				insert.setInt(2, x1);
+				insert.setInt(3, y1);
+				insert.setInt(4, z1);
+				insert.setInt(5, x2);
+				insert.setInt(6, y2);
+				insert.setInt(7, z2);
+				insert.execute();
+				structures.put(name, structure);
+			} catch (Exception ex) {
+				ex.printStackTrace();
 			}
 		}
 	}

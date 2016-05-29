@@ -18,7 +18,6 @@ public class DevotedPvP extends JavaPlugin {
 	private TeamManager teamMan;
 	private KillStreakManager killMan;
 	private World spawnWorld;
-	private World endWorld;
 	private Location spawnMin;
 	private Location spawnMax;
 	
@@ -31,7 +30,6 @@ public class DevotedPvP extends JavaPlugin {
 		cHandler = new CommandHandler(this);
 		registerCommands();
 		spawnWorld = getServer().getWorld(getConfig().getString("spawnworld", "world"));
-		endWorld = getServer().getWorld(getConfig().getString("endworld", "world_the_end"));
 		invMan = InventoryManager.getInstance();
 		duelMan = DuelManager.getInstance();
 		mapMan = MapManager.getInstance();
@@ -104,10 +102,6 @@ public class DevotedPvP extends JavaPlugin {
 	
 	public World getSpawnWorld() {
 		return spawnWorld;
-	}
-	
-	public World getEndWorld() {
-		return endWorld;
 	}
 	
 	public static DevotedPvP getInstance() {

@@ -2,6 +2,7 @@ name: DevotedPvP
 authors: [TealNerd]
 version: 1.0
 main: com.biggestnerd.devotedpvp.DevotedPvP
+dependencies: [WorldEdit]
 commands:
   inv:
     description: "Save/load inventories."
@@ -10,11 +11,11 @@ commands:
   duel:
     description: Requests to duel someone
     usage: /duel <playername>
-    permission: pvp.use
+    permission: pvp.badmin
   queue:
     description: Queue for a ranked duel
     usage: /queue
-    permission: pvp.use
+    permission: pvp.badmin
   accept:
     description: Accept the last duel request
     usage: /accept
