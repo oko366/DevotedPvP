@@ -2,14 +2,17 @@ package com.biggestnerd.devotedpvp;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -31,7 +34,8 @@ public class DuelManager implements Listener {
 	private HashMap<UUID, UUID> dueling;
 	private ConcurrentLinkedQueue<UUID> queue;
 	private HashMap<UUID, Integer> eloCache;
-	private HashMap<UUID, ArrayList<UUID>> requestedDuels;
+	private HashMap<UUID, LinkedList<DuelRequest>> requestedDuels;
+	private HashMap<UUID, HashSet<UUID>> spectators;
 	private ArrayList<UUID> rankings;
 	
 	private DuelManager() {
@@ -42,7 +46,8 @@ public class DuelManager implements Listener {
 		queue = new ConcurrentLinkedQueue<UUID>();
 		dueling = new HashMap<UUID, UUID>();
 		rankings = new ArrayList<UUID>();
-		requestedDuels = new HashMap<UUID, ArrayList<UUID>>();
+		requestedDuels = new HashMap<UUID, LinkedList<DuelRequest>>();
+		spectators = new HashMap<UUID, HashSet<UUID>>();
 		queueThread = new QueueThread();
 		queueThread.runTaskTimer(plugin, 1l, 1l);
 	}
@@ -141,6 +146,9 @@ public class DuelManager implements Listener {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		eloCache.put(event.getPlayer().getUniqueId(), getElo(event.getPlayer().getUniqueId()));
 		fixRank(event.getPlayer().getUniqueId());
+		if(event.getPlayer().getWorld().getName().startsWith("duel")) {
+			event.getPlayer().teleport(DevotedPvP.getInstance().getSpawnWorld().getSpawnLocation());
+		}
 	}
 	
 	@EventHandler
@@ -170,7 +178,7 @@ public class DuelManager implements Listener {
 			}
 		}
 	}
-	
+
 	private void endRankedMatch(UUID winner, UUID loser) {
 		playerWinDuel(Bukkit.getPlayer(winner), Bukkit.getPlayer(loser));
 		fixRank(winner);
@@ -179,14 +187,38 @@ public class DuelManager implements Listener {
 	}
 	
 	private void endDuel(UUID winner, UUID loser) {
+		if(spectators.containsKey(winner)) {
+			for(UUID id : spectators.get(winner)) {
+				Player player = Bukkit.getPlayer(id);
+				if(player != null) {
+					player.teleport(DevotedPvP.getInstance().getSpawnWorld().getSpawnLocation());
+					player.setGameMode(GameMode.ADVENTURE);
+				}
+			}
+		}
+		if(spectators.containsKey(loser)) {
+			for(UUID id : spectators.get(loser)) {
+				Player player = Bukkit.getPlayer(id);
+				if(player != null) {
+					player.teleport(DevotedPvP.getInstance().getSpawnWorld().getSpawnLocation());
+					player.setGameMode(GameMode.ADVENTURE);
+				}
+			}
+		}
 		dueling.remove(winner);
 		dueling.remove(loser);
 		Player p1 = Bukkit.getPlayer(winner);
 		Player p2 = Bukkit.getPlayer(loser);
-		p1.teleport(plugin.getSpawnWorld().getSpawnLocation(), TeleportCause.PLUGIN);
-		p2.teleport(plugin.getSpawnWorld().getSpawnLocation(), TeleportCause.PLUGIN);
-		p1.sendMessage(ChatColor.GREEN + "You have won your duel against " + p2.getName());
-		p2.sendMessage(ChatColor.RED + "You have lost your duel against " + p1.getName());
+		if(p1 != null) {
+			p1.teleport(plugin.getSpawnWorld().getSpawnLocation(), TeleportCause.PLUGIN);
+			p1.setFireTicks(0);
+			p1.sendMessage(ChatColor.GREEN + "You have won your duel against " + p2.getName());
+		}
+		if(p2 != null) {
+			p2.teleport(plugin.getSpawnWorld().getSpawnLocation(), TeleportCause.PLUGIN);
+			p2.setFireTicks(0);
+			p2.sendMessage(ChatColor.RED + "You have lost your duel against " + p1.getName());
+		}
 		plugin.getMapManager().handleDuelEnd(winner, loser);
 	}
 	
@@ -197,26 +229,51 @@ public class DuelManager implements Listener {
 		queue.remove(p2.getUniqueId());
 		p1.setMetadata("ranked", new FixedMetadataValue(plugin, ranked));
 		p2.setMetadata("ranked", new FixedMetadataValue(plugin, ranked));
-		String message = ChatColor.GREEN + "Your" + (ranked ? " ranked" : "") + " duel with %s is beginning now.";
+		String message = ChatColor.GREEN + "Your" + (ranked ? " ranked" : "") + " duel with %s will begin shortly.";
 		p1.sendMessage(String.format(message, p2.getName()));
 		p2.sendMessage(String.format(message, p1.getName()));
 		plugin.getMapManager().randomSpawnForDuel(p1, p2);
 	}
 	
-	public void requestDuel(Player player, Player request) {
-		if(!requestedDuels.containsKey(player.getUniqueId())) {
-			requestedDuels.put(player.getUniqueId(), new ArrayList<UUID>());
+	public void requestDuel(Player player, Player request, String kitName) {
+		if(!requestedDuels.containsKey(request.getUniqueId())) {
+			requestedDuels.put(request.getUniqueId(), new LinkedList<DuelRequest>());
 		}
-		requestedDuels.get(player.getUniqueId()).add(request.getUniqueId());
-		request.sendMessage(ChatColor.GOLD + player.getName() + " has requested a duel with you, type /accept " + player.getName() + " to accept the duel.");
+		if(requestedDuels.get(request.getUniqueId()).contains(player.getUniqueId())) return;
+		if(kitName != null) {
+			if(!InventoryManager.getInstance().inventoryExists(kitName)) {
+				player.sendMessage(ChatColor.RED + "Inventory does not exist, could not request duel.");
+				return;
+			}
+		}
+		requestedDuels.get(request.getUniqueId()).addLast(new DuelRequest(player.getUniqueId(), kitName != null ? kitName : ""));
+		String kitMsg = kitName != null ? "kit: " + kitName : "any kit";
+		request.sendMessage(ChatColor.GOLD + player.getName() + " has requested a duel with " + kitMsg + ", type /accept " + player.getName() + " to accept the duel.");
+		player.sendMessage(ChatColor.GOLD + "You have requested a duel with " + request.getName());
+	}
+	
+	public void acceptDuel(Player player, Player accepted, String kitName) {
+		if(isInDuel(accepted.getUniqueId())) {
+			player.sendMessage(ChatColor.RED + "That player is in a duel with someone else, please wait to duel them.");
+			return;
+		}
+		if(InventoryManager.getInstance().loadInventory(player, kitName) && InventoryManager.getInstance().loadInventory(accepted, kitName)) {
+			startDuel(player, accepted, false);
+			requestedDuels.get(player.getUniqueId()).remove(accepted.getUniqueId());
+		} else {
+			player.sendMessage(ChatColor.RED + "An error occurred starting the duel.");
+		}
 	}
 	
 	public void acceptDuel(Player player, Player accepted) {
-		if(!requestedDuels.containsKey(accepted.getUniqueId()) || !requestedDuels.get(accepted.getUniqueId()).contains(player.getUniqueId())) {
-			player.sendMessage(ChatColor.RED + accepted.getName() + " has not requested a duel with you.");
+		if(!requestedDuels.containsKey(player.getUniqueId()) || requestedDuels.get(player.getUniqueId()).contains(accepted)) {
+			player.sendMessage(ChatColor.RED + "Nobody has requested a duel with you");
 			return;
 		}
-		startDuel(player, accepted, false);
+		int i = requestedDuels.get(player.getUniqueId()).indexOf(accepted.getUniqueId());
+		if(i < 0 || i > requestedDuels.get(player.getUniqueId()).size()) return; //should never happen but idk
+		DuelRequest req = requestedDuels.get(player.getUniqueId()).get(i);
+		acceptDuel(player, accepted, req.kitName);
 	}
 	
 	public void acceptDuel(Player player) {
@@ -224,7 +281,13 @@ public class DuelManager implements Listener {
 			player.sendMessage(ChatColor.RED + "Nobody has requested a duel with you");
 			return;
 		}
-		startDuel(player, Bukkit.getPlayer(requestedDuels.get(player.getUniqueId()).get(requestedDuels.get(player.getUniqueId()).size() - 1)), false);
+		DuelRequest last = requestedDuels.get(player.getUniqueId()).getLast();
+		Player accepted = Bukkit.getPlayer(last.player);
+		if(accepted == null) {
+			player.sendMessage(ChatColor.RED + "Player not found, could not accept duel.");
+			return;
+		}
+		acceptDuel(player, accepted, last.kitName);
 	}
 	
 	public void forfeitDuel(Player player) {
@@ -235,6 +298,8 @@ public class DuelManager implements Listener {
 			} else {
 				endDuel(dueling.get(player.getUniqueId()), player.getUniqueId());
 			}
+		} else {
+			player.sendMessage(ChatColor.RED + "You can't forfeit if you're not in a duel!");
 		}
 	}
 	
@@ -261,6 +326,16 @@ public class DuelManager implements Listener {
 	
 	public boolean isInDuel(UUID player) {
 		return dueling.containsKey(player);
+	}
+	
+	public void spectatePlayer(Player player, Player spectating) {
+		if(!spectators.containsKey(spectating.getUniqueId())) {
+			spectators.put(spectating.getUniqueId(), new HashSet<UUID>());
+		}
+		spectators.get(spectating.getUniqueId()).add(player.getUniqueId());
+		player.setGameMode(GameMode.SPECTATOR);
+		player.teleport(spectating);
+		player.sendMessage(ChatColor.GREEN + "You are now spectating " + spectating.getName());
 	}
 	
 	class QueueThread extends BukkitRunnable {
@@ -303,6 +378,28 @@ public class DuelManager implements Listener {
 					startDuel(Bukkit.getPlayer(id), Bukkit.getPlayer(match), true);
 				}
 			}
+		}
+	}
+	
+	class DuelRequest {
+		UUID player;
+		String kitName;
+		
+		public DuelRequest(UUID player, String kitName) {
+			this.player = player;
+			this.kitName = kitName;
+		}
+		
+		public int hashCode() {
+			return player.hashCode();
+		}
+		
+		public boolean equals(Object o) {
+			if(!(o instanceof DuelRequest)) {
+				return false;
+			}
+			DuelRequest other = (DuelRequest)o;
+			return other.player.equals(player);
 		}
 	}
 	

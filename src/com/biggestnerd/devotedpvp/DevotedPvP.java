@@ -1,7 +1,10 @@
 package com.biggestnerd.devotedpvp;
 
+import java.util.Arrays;
+
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -41,6 +44,11 @@ public class DevotedPvP extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(killMan, this);
 	}
 	
+	@Override
+	public void onDisable() {
+		MapLoader.cleanUp();
+	}
+	
 	private void initializeDb() {
 		ConfigurationSection config = getConfig().getConfigurationSection("sql");
 		String host = config.getString("hostname");
@@ -58,11 +66,12 @@ public class DevotedPvP extends JavaPlugin {
 		getCommand("duel").setExecutor(cHandler);
 		getCommand("accept").setExecutor(cHandler);
 		getCommand("queue").setExecutor(cHandler);
-		getCommand("forfeit").setExecutor(cHandler);
-		getCommand("wand").setExecutor(cHandler);
-		getCommand("structure").setExecutor(cHandler);
+		PluginCommand ff = getCommand("forfeit");
+		ff.setAliases(Arrays.asList(new String[] {"ff", "surrender"}));
+		ff.setExecutor(cHandler);
 		getCommand("spectate").setExecutor(cHandler);
 		getCommand("team").setExecutor(cHandler);
+		getCommand("maps").setExecutor(cHandler);
 	}
 	
 	private void setupSpawnLocations() {

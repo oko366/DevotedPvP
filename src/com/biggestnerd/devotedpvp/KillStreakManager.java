@@ -75,9 +75,15 @@ public class KillStreakManager implements Listener {
 			String msg = player.getName() + " was slain.";
 			String killermsg = "";
 			String extra = messageExtras[rng.nextInt(messageExtras.length)];
+			String item = "";
 			if(player.getKiller() != null) {
 				Player killer = player.getKiller();
-				msg = player.getName() + " was slain by " + killer.getName() + ".";
+				item = killer.getInventory().getItemInMainHand() != null ? killer.getInventory().getItemInMainHand().getType().toString() : "bear hands";
+				try {
+					item = killer.getInventory().getItemInMainHand().getItemMeta().getDisplayName();
+				} catch (Exception ex) {}
+				msg = player.getName() + " was slain by " + killer.getName() + ",";
+				item = " with " + item  + ".";
 				incrementKillStreak(killer);
 				int streak = getKillStreak(killer);
 				killermsg = killer.getName() + " has a killstreak of " + streak;
@@ -89,8 +95,8 @@ public class KillStreakManager implements Listener {
 			new ImageMessage(face, 8, ImageChar.BLOCK.getChar()).appendText(
 					"",
 					"",
-					"",
 					msg,
+					item,
 					killermsg,
 					extra).sendToPlayers(Bukkit.getOnlinePlayers());
 		}

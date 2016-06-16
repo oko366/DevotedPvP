@@ -1,199 +1,164 @@
 package com.biggestnerd.devotedpvp;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.Arrays;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Random;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.WorldCreator;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.craftbukkit.v1_10_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
-import org.bukkit.event.world.WorldUnloadEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
-import com.biggestnerd.devotedpvp.MapStructure.InternalLocation;
+import net.minecraft.server.v1_10_R1.MinecraftServer;
+import net.minecraft.server.v1_10_R1.WorldServer;
 
 public class MapManager implements Listener {
 	
 	private static MapManager instance;
-	
-	private HashMap<UUID, Location> posOnes;
-	private HashMap<UUID, Location> posTwos;
-	
-	private HashMap<String, MapStructure> structures;
-	private HashMap<Location, String> mapLocations;
-	private HashMap<Location, Boolean> inUse;
-	private HashMap<UUID, Location> users;
-	private Location lastLocation;
+
+	private HashMap<String, MapLoader> loaders;
+	private HashMap<UUID, String> users;
 	private Random rng;
-	private Database db;
+	private File configFile;
 	
 	private MapManager() {
-		db = DevotedPvP.getInstance().getDb();
-		MapStructure.setupWorldEditAdapter();
-		structures = new HashMap<String, MapStructure>();
-		inUse = new HashMap<Location, Boolean>();
-		mapLocations = new HashMap<Location, String>();
+		loaders = new HashMap<String, MapLoader>();
+		users = new HashMap<UUID, String>();
 		rng = new Random();
-		posOnes = new HashMap<UUID, Location>();
-		posTwos = new HashMap<UUID, Location>();
-		users = new HashMap<UUID, Location>();
-		initializeTables();
-		loadCache();
-		lastLocation = new Location(DevotedPvP.getInstance().getSpawnWorld(), 0, 70, 2500);
+		loadMaps();
 	}
 	
-	private void initializeTables() {
-		db.execute("CREATE TABLE IF NOT EXISTS maps (name varchar(40) unique not null, x1 int, x2 int, y1 int, y2 int, z1 int, z2 int)");
-	}
-	
-	private void loadCache() {
-		try {
-			PreparedStatement getMaps = db.prepareStatement("SELECT * FROM maps");
-			ResultSet result = getMaps.executeQuery();
-			while(result.next()) {
-				String name = result.getString("name");
-				InternalLocation spawn1 = new InternalLocation(result.getInt("x1"), result.getInt("y1"), result.getInt("z1"));
-				InternalLocation spawn2 = new InternalLocation(result.getInt("x2"), result.getInt("y2"), result.getInt("z2"));
-				structures.put(name, new MapStructure(name, spawn1, spawn2));
+	private void loadMaps() {
+		configFile = new File(DevotedPvP.getInstance().getDataFolder(), "maps.yml");
+		if(!configFile.exists()) {
+			try {
+				configFile.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		} catch (Exception ex) { 
-			ex.printStackTrace();
+		}
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+		for(String map : config.getKeys(false)) {
+			ConfigurationSection mapConfig = config.getConfigurationSection(map);
+			int x1 = mapConfig.getInt("x1");
+			int y1 = mapConfig.getInt("y1");
+			int z1 = mapConfig.getInt("z1");
+			int x2 = mapConfig.getInt("x2");
+			int y2 = mapConfig.getInt("y2");
+			int z2 = mapConfig.getInt("z2");
+			Location spawn1 = new Location(DevotedPvP.getInstance().getSpawnWorld(), x1, y1, z1);
+			Location spawn2 = new Location(DevotedPvP.getInstance().getSpawnWorld(), x2, y2, z2);
+			loaders.put(map, new MapLoader(map, spawn1, spawn2));
 		}
 	}
 	
 	public void randomSpawnForDuel(Player p1, Player p2) {
-		Location loc = getNextUnusedLocation();
-		MapStructure structure = structures.get(mapLocations.get(loc));
-		Location firstSpawn = structure.getFirstSpawn().getRelativeTo(loc.getBlock()).getLocation();
-		Location secondSpawn = structure.getSecondSpawn().getRelativeTo(loc.getBlock()).getLocation();
-		p1.teleport(firstSpawn, TeleportCause.PLUGIN);
-		p2.teleport(secondSpawn, TeleportCause.PLUGIN);
-		users.put(p1.getUniqueId(), loc);
+		System.out.println("Preparing duel map for " + p1.getName() + " and " + p2.getName());
+		MapLoader loader = getRandomMap();
+		String map = loader.loadAndTeleportPlayers(p1, p2);
+		users.put(p1.getUniqueId(), map);
 	}
 	
 	public void handleDuelEnd(UUID winner, UUID loser) {
-		Location loc = users.get(winner);
-		if(loc == null) {
-			loc = users.get(loser);
+		String worldName = users.get(winner);
+		if(worldName == null) {
+			worldName = users.get(loser);
 		}
-		inUse.put(loc, false);
-	}
-	
-	private static boolean x = false;
-	private static boolean z = false;
-	private static int mult = 1;
-	private Location getNextUnusedLocation() {
-		for(Location loc : inUse.keySet()) {
-			if(!inUse.get(loc).booleanValue()) {
-				return loc;
-			}
-		}
-		String[] entries = structures.keySet().toArray(new String[0]);
-		String structure = entries[rng.nextInt(entries.length)];
-		int amt = 300 * mult++;
-		Location next = lastLocation;
-		if(!x) {
-			x = true;
-			next = next.add(amt, 0, 0);
-		} else if(!z) {
-			z = true;
-			next = next.add(0, 0, amt);
-		} else {
-			x = false;
-			z = false;
-			next = next.add(amt, 0, amt);
-		}
-		mapLocations.put(next, structure);
-		inUse.put(next, true);
-		structures.get(structure).loadAtLocation(next);
-		return next;
-	}
-	
-	private void removeStructures() {
-		for(Location loc : mapLocations.keySet()) {
-			MapStructure map = structures.get(mapLocations.get(loc));
-			map.unload(loc);
+		World world = Bukkit.getWorld(worldName);
+		File dir = world.getWorldFolder();
+		Bukkit.unloadWorld(worldName, true);
+		MinecraftServer server = ((CraftServer)Bukkit.getServer()).getServer();
+		WorldServer worldServer = ((CraftWorld)world).getHandle();
+		server.worlds.remove(worldServer);
+		try {
+			dir.setWritable(true);
+			FileUtils.deleteDirectory(dir);
+			System.out.println("Deleted: " + worldName);
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
 	}
 	
-	@EventHandler
-	public void onWorldUnload(WorldUnloadEvent event) {
-		removeStructures();
+	private MapLoader getRandomMap() {
+		String[] names = loaders.keySet().toArray(new String[0]);
+		return loaders.get(names[rng.nextInt(names.length)]);
 	}
 	
-	@EventHandler
-	public void onPlayerInteract(PlayerInteractEvent event) {
-		if(event.getItem() != null) {
-			ItemStack item = event.getItem();
-			if(item.getType() == Material.STICK && item.getItemMeta().getLore().contains(ChatColor.GOLD + "this is a wand")) {
-				UUID id = event.getPlayer().getUniqueId();
-				if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-					posOnes.put(id, event.getClickedBlock().getLocation());
-					event.getPlayer().sendMessage(ChatColor.DARK_AQUA + "Spawn position one set!");
-				}
-				if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
-					posTwos.put(id, event.getClickedBlock().getLocation());
-					event.setCancelled(true);
-					event.getPlayer().sendMessage(ChatColor.DARK_AQUA + "Spawn position two set!");
-				}
-			}
+	public void listMaps(Player player) {
+		String list = "";
+		for(String map : loaders.keySet()) {
+			list += map + ", ";
 		}
+		player.sendMessage(ChatColor.GREEN + "The following maps are configured: " + list.substring(0, list.length() - 2));
 	}
 	
-	public void makeStructure(Player player, String name) {
-		UUID id = player.getUniqueId();
-		if(!(posOnes.containsKey(id) && posTwos.containsKey(id))) {
-			player.sendMessage(ChatColor.RED + "You must specify spawn positions to create a structure");
-		} else {
-			try {
-				Location pos = player.getLocation();
-				Location posOne = posOnes.get(id);
-				Location posTwo = posTwos.get(id);
-				int x1 = Math.abs(posOne.getBlockX() -  pos.getBlockX());
-				int y1 = Math.abs(posOne.getBlockY() - pos.getBlockY());
-				int z1 = Math.abs(posOne.getBlockZ() - pos.getBlockZ());
-				int x2 = Math.abs(posTwo.getBlockX() -  pos.getBlockX());
-				int y2 = Math.abs(posTwo.getBlockY() - pos.getBlockY());
-				int z2 = Math.abs(posTwo.getBlockZ() - pos.getBlockZ());
-				MapStructure structure = new MapStructure(name, new InternalLocation(x1, y1, z1), new InternalLocation(x2, y2, z2));
-				PreparedStatement insert = db.prepareStatement("INSERT INTO maps (name,x1,y1,z1,x2,y2,z2) VALUES (?,?,?,?,?,?,?)");
-				insert.setString(1, name);
-				insert.setInt(2, x1);
-				insert.setInt(3, y1);
-				insert.setInt(4, z1);
-				insert.setInt(5, x2);
-				insert.setInt(6, y2);
-				insert.setInt(7, z2);
-				insert.execute();
-				structures.put(name, structure);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
+	public void createBlankMap(Player player) {
+		File emptyWorld = new File(DevotedPvP.getInstance().getDataFolder(), "empty");
+		if(!emptyWorld.exists()) {
+			player.sendMessage(ChatColor.RED + "EmptyWorld folder is missing!");
+			return;
 		}
+		File worldFile = new File(MapLoader.getRootFolder(), player.getName());
+		try {
+			FileUtils.copyDirectory(emptyWorld, worldFile);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		Bukkit.getServer().createWorld(new WorldCreator(player.getName()));
+		World world = Bukkit.getWorld(player.getName());
+		player.teleport(new Location(world, 0, 40, 0));
 	}
 	
-	public void giveWand(Player player) {
-		ItemStack wand = new ItemStack(Material.STICK);
-		ItemMeta meta = wand.getItemMeta();
-		meta.setLore(new LinkedList<String>(Arrays.asList(new String[]{ChatColor.GOLD + "this is a wand"})));
-		meta.setDisplayName("Wand");
-		wand.setItemMeta(meta);
-		int emptySlot = player.getInventory().firstEmpty();
-		if(emptySlot != -1) {
-			player.getInventory().setItem(emptySlot, wand);
-		} else {
-			player.sendMessage(ChatColor.RED + "Inventory full, could not give wand");
+	public void createMapLoader(Player player, String name) {
+		MapLoader loader = MapLoader.copyWorldFolder(player, name);
+		if(loader == null) {
+			player.sendMessage(ChatColor.RED + "An error occurred making the map!");
+			return;
+		}
+		loaders.put(name, loader);
+		saveLoader(loader);
+		player.sendMessage(ChatColor.GREEN + "Map '" + name + "' created!");
+	}
+	
+	public void deleteMap(Player player, String name) {
+		loaders.remove(name);
+		MapLoader.remove(name);
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+		config.set(name, null);
+		player.sendMessage(ChatColor.GREEN + "Map deleted: " + name);
+	}
+	
+	public void reload(Player player) {
+		loaders.clear();
+		loadMaps();
+		player.sendMessage(ChatColor.GREEN + "Maps reloaded!");
+	}
+	
+	private void saveLoader(MapLoader loader) {
+		YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+		ConfigurationSection mapSection = config.createSection(loader.getName());
+		Location spawn1 = loader.getFirstSpawn();
+		Location spawn2 = loader.getSecondSpawn();
+		mapSection.set("x1", spawn1.getBlockX());
+		mapSection.set("y1", spawn1.getBlockY());
+		mapSection.set("z1", spawn1.getBlockZ());
+		mapSection.set("x2", spawn2.getBlockX());
+		mapSection.set("y2", spawn2.getBlockY());
+		mapSection.set("z2", spawn2.getBlockZ());
+		try {
+			config.save(configFile);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	

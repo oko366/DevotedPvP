@@ -2,7 +2,6 @@ name: DevotedPvP
 authors: [TealNerd]
 version: 1.0
 main: com.biggestnerd.devotedpvp.DevotedPvP
-dependencies: [WorldEdit]
 commands:
   inv:
     description: "Save/load inventories."
@@ -11,15 +10,15 @@ commands:
   duel:
     description: Requests to duel someone
     usage: /duel <playername>
-    permission: pvp.badmin
+    permission: pvp.duel
   queue:
     description: Queue for a ranked duel
     usage: /queue
-    permission: pvp.badmin
+    permission: pvp.queue
   accept:
     description: Accept the last duel request
     usage: /accept
-    permission: pvp.use
+    permission: pvp.duel
   forfeit:
     description: Forfeit a duel
     usage: /forfeit
@@ -30,14 +29,6 @@ commands:
     usage: /elo
     permission: pvp.use
     aliases: [rank]
-  wand:
-    description: Gives a wand for saving structures
-    usage: /wand
-    permission: pvp.badmin
-  structure:
-    description: Command for creating structures
-    usage: /structure name
-    permission: pvp.badmin
   team:
     description: Change your team
     usage: /team <color>
@@ -46,11 +37,20 @@ commands:
     description: Spectate another player
     usage: /spectate <player>
     permission: pvp.use
-
+  maps:
+    description: Command for map stuff
+    usage: /maps <list|blank> or /maps create <name>
+    permission: pvp.badmin
 permissions:
   pvp.use:
     description: "use inventory saving/loading."
     default: true
+  pvp.duel:
+    description: "allows players to duel"
+    default: op 
+  pvp.queue:
+    description: "allows players to queue"
+    default: op
   pvp.badmin:
     description: "Admin crimes inc"
     default: op
