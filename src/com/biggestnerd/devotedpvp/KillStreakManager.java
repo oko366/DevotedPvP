@@ -35,7 +35,9 @@ public class KillStreakManager implements Listener {
 		streaks = new HashMap<UUID, Integer>();
 		faces = new HashMap<UUID, BufferedImage>();
 		rng = new Random();
-		messageExtras = DevotedPvP.getInstance().getConfig().getStringList("deathmessages").toArray(new String[0]);
+		if(DevotedPvP.getInstance().getConfig().contains("deathmessages")) {
+			messageExtras = DevotedPvP.getInstance().getConfig().getStringList("deathmessages").toArray(new String[0]);
+		}
 	}
 	
 	public int getKillStreak(Player player) {
@@ -74,7 +76,7 @@ public class KillStreakManager implements Listener {
 			BufferedImage face = faces.get(player.getUniqueId());
 			String msg = player.getName() + " was slain.";
 			String killermsg = "";
-			String extra = messageExtras[rng.nextInt(messageExtras.length)];
+			String extra = messageExtras != null ? messageExtras[rng.nextInt(messageExtras.length)] : "";
 			String item = "";
 			if(player.getKiller() != null) {
 				Player killer = player.getKiller();

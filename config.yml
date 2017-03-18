@@ -12,3 +12,5 @@ spawnbounds:
   maxx: 300
   maxy: 200
   maxz: 300
+deathmessages:
+ - RIP in pieces

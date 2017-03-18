@@ -41,7 +41,6 @@ public class CommandHandler implements CommandExecutor {
 		case "forfeit": return handleForfeitCommand(player);
 		case "elo": return handleEloCommand(player);
 		case "spectate": return handleSpectateCommand(player, args);
-		case "team": return handleTeamCommand(player, args);
 		case "maps": return handleMapsCommand(player, args);
 		}
 		return true;
@@ -213,28 +212,7 @@ public class CommandHandler implements CommandExecutor {
 		}
 		return true;
 	}
-	
-	private boolean handleTeamCommand(Player player, String[] args) {
-		if(args.length == 0) {
-			player.sendMessage(ChatColor.RED + "Invalid arguments, do /team <color|clear>");
-		} else {
-			String color = args[0].toUpperCase();
-			if(color.equalsIgnoreCase("clear")) {
-				plugin.getTeamManager().clearTeam(player);
-				player.sendMessage(ChatColor.GREEN + "You are not longer on a team");
-			} else {
-				try {
-					ChatColor team = ChatColor.valueOf(color);
-					plugin.getTeamManager().handleTeamChange(player, team);
-					player.sendMessage("You are now on the " + team + color + ChatColor.WHITE + " team");
-				}catch (Exception ex) {
-					player.sendMessage(ChatColor.RED + color + " is not a valid team");
-				}
-			}
-		}
-		return true;
-	}
-	
+
 	private boolean handleMapsCommand(Player player, String[] args) {
 		if(args.length == 0) {
 			player.sendMessage(ChatColor.RED + "Invalid arguments do /maps <list|blank> or /maps create <name>");

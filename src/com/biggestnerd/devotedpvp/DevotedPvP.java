@@ -18,7 +18,6 @@ public class DevotedPvP extends JavaPlugin {
 	private InventoryManager invMan;
 	private DuelManager duelMan;
 	private MapManager mapMan;
-	private TeamManager teamMan;
 	private KillStreakManager killMan;
 	private World spawnWorld;
 	private Location spawnMin;
@@ -36,7 +35,6 @@ public class DevotedPvP extends JavaPlugin {
 		invMan = InventoryManager.getInstance();
 		duelMan = DuelManager.getInstance();
 		mapMan = MapManager.getInstance();
-		teamMan = TeamManager.getInstance();
 		killMan = KillStreakManager.getInstance();
 		setupSpawnLocations();
 		getServer().getPluginManager().registerEvents(mapMan, this);
@@ -103,10 +101,6 @@ public class DevotedPvP extends JavaPlugin {
 	
 	public MapManager getMapManager() {
 		return mapMan;
-	}
-	
-	public TeamManager getTeamManager() {
-		return teamMan;
 	}
 	
 	public World getSpawnWorld() {

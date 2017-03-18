@@ -1,6 +1,6 @@
 name: DevotedPvP
 authors: [TealNerd]
-version: 1.0
+version: ${project.version}
 main: com.biggestnerd.devotedpvp.DevotedPvP
 commands:
   inv:
