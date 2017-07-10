@@ -15,6 +15,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 import org.bukkit.potion.PotionEffect;
 
 import com.bobacadodl.imgmessage.ImageChar;
@@ -80,17 +82,20 @@ public class KillStreakManager implements Listener {
 			String item = "";
 			if(player.getKiller() != null) {
 				Player killer = player.getKiller();
-				item = killer.getInventory().getItemInMainHand() != null ? killer.getInventory().getItemInMainHand().getType().toString() : "bear hands";
-				try {
-					item = killer.getInventory().getItemInMainHand().getItemMeta().getDisplayName();
-				} catch (Exception ex) {}
-				msg = player.getName() + " was slain by " + killer.getName() + ",";
+				ItemStack weapon = killer.getInventory().getItemInMainHand();
+				// If they aren't holding anything, then they used "their bare hands"
+				item = weapon.getType() == Material.AIR ? "their bare hands" : weapon.getType().toString();
+				// If their weapon has a custom display name, use that instead
+				item = weapon.getItemMeta() == null || weapon.getItemMeta().getDisplayName() == null ? item : weapon.getItemMeta().getDisplayName();
+				msg = player.getName() + " was slain by " + killer.getName();
+				// Add the killer's final health
+				msg += " (" + (int) Math.ceil(killer.getHealth()) + ChatColor.RED + "\u2764" + ChatColor.RESET + ")"; // \u2764 is a heart
 				item = " with " + item  + ".";
 				incrementKillStreak(killer);
 				int streak = getKillStreak(killer);
 				killermsg = killer.getName() + " has a killstreak of " + streak;
 				if(streak >= 5) extra = killer.getName() + " is " + ChatColor.RED + "DOMINATING!";
-				if(streak >= 10) extra = killer.getName() + "is one a " + ChatColor.RED + ChatColor.BOLD + "RAMPAGE!";
+				if(streak >= 10) extra = killer.getName() + "is on a " + ChatColor.RED + ChatColor.BOLD + "RAMPAGE!";
 				if(streak >= 15) extra = killer.getName() + " is " + ChatColor.AQUA + ChatColor.BOLD + "GODLIKE!";
 			}
 			resetKillStreak(player);
