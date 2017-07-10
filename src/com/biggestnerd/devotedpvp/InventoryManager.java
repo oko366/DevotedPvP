@@ -7,15 +7,15 @@ import java.sql.ResultSet;
 import java.util.LinkedList;
 import java.util.UUID;
 
-import org.bukkit.craftbukkit.v1_11_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import net.md_5.bungee.api.ChatColor;
-import net.minecraft.server.v1_11_R1.EntityHuman;
-import net.minecraft.server.v1_11_R1.EntityPlayer;
-import net.minecraft.server.v1_11_R1.NBTBase;
-import net.minecraft.server.v1_11_R1.NBTCompressedStreamTools;
-import net.minecraft.server.v1_11_R1.NBTTagCompound;
+import net.minecraft.server.v1_12_R1.EntityHuman;
+import net.minecraft.server.v1_12_R1.EntityPlayer;
+import net.minecraft.server.v1_12_R1.NBTBase;
+import net.minecraft.server.v1_12_R1.NBTCompressedStreamTools;
+import net.minecraft.server.v1_12_R1.NBTTagCompound;
 
 public class InventoryManager {
 
@@ -103,7 +103,7 @@ public class InventoryManager {
 		EntityHuman human = craft.getHandle();
 		try {
 			NBTTagCompound nbt = new NBTTagCompound();
-			human.e(nbt);
+			human.save(nbt);
 			NBTTagCompound invNBT = new NBTTagCompound();
 			invNBT.set("inventory", nbt.get("Inventory"));
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -154,7 +154,7 @@ public class InventoryManager {
 					return false;
 				}	
 				NBTTagCompound parent = new NBTTagCompound();
-				human.e(parent);
+				human.save(parent);
 				parent.set("Inventory", nbt.get("inventory"));
 				human.f(parent);
 				return true;
