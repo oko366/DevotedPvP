@@ -6,9 +6,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.LinkedList;
 import java.util.UUID;
+import java.util.Map;
 
 import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.Material;
 
 import net.md_5.bungee.api.ChatColor;
 import net.minecraft.server.v1_12_R1.EntityHuman;
@@ -47,32 +54,36 @@ public class InventoryManager {
 					+ "owner VARCHAR(36) NOT NULL)");
 		db.execute("CREATE TABLE IF NOT EXISTS db_version (db_version int not null," +
 						"update_time varchar(24),"
-						+ "plugin_name varchar(40))");
+						+ "plugin_name varchar(40) UNIQUE)");
+		db.execute("INSERT IGNORE INTO db_version VALUES (1, now(), 'DevotedPvP')");
 	}
 	
 	private void fixVersion() {
 		int version = getVersion();
 		if(version == 0) {
-			try {
-				PreparedStatement getInventories = db.prepareStatement("SELECT * FROM inventories");
-				ResultSet result = getInventories.executeQuery();
+			try (PreparedStatement getInventories = db.prepareStatement("SELECT * FROM inventories");
+					ResultSet result = getInventories.executeQuery();) {
 				while(result.next()) {
-					ByteArrayInputStream input = new ByteArrayInputStream(result.getBytes("inv"));
-					NBTTagCompound nbt = NBTCompressedStreamTools.a(input);
-					NBTBase inv = nbt.get("Inventory");
-					NBTTagCompound parent = new NBTTagCompound();
-					parent.set("inventory", inv);
-					PreparedStatement updateInventory = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
-					ByteArrayOutputStream output = new ByteArrayOutputStream();
-					NBTCompressedStreamTools.a(parent, output);
-					updateInventory.setString(1, result.getString("name"));
-					updateInventory.setBytes(2, output.toByteArray());
-					updateInventory.execute();
+					try {
+						ByteArrayInputStream input = new ByteArrayInputStream(result.getBytes("inv"));
+						NBTTagCompound nbt = NBTCompressedStreamTools.a(input);
+						NBTBase inv = nbt.get("Inventory");
+						NBTTagCompound parent = new NBTTagCompound();
+						parent.set("inventory", inv);
+						PreparedStatement updateInventory = db.prepareStatement("UPDATE inventories SET inv=? WHERE name=?");
+						ByteArrayOutputStream output = new ByteArrayOutputStream();
+						NBTCompressedStreamTools.a(parent, output);
+						updateInventory.setString(1, result.getString("name"));
+						updateInventory.setBytes(2, output.toByteArray());
+						updateInventory.execute();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
-				db.execute("UPDATE db_version SET db_version=1 WHERE plugin_name='DevotedPvP'");
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
+			db.execute("UPDATE db_version SET db_version=1 WHERE plugin_name='DevotedPvP'");
 		}
 	}
 	
@@ -94,6 +105,10 @@ public class InventoryManager {
 	public boolean saveInventory(Player player, String kitName) {
 		if(!(player instanceof CraftPlayer)) {
 			System.out.println("For some reason, " + player.getName() + " is not a human, RIP");
+			return false;
+		}
+		if (!cleanInventory(player)) {
+			System.out.println("For some reason, " + player.getName() + " has an uncleanable kit, RIP");
 			return false;
 		}
 		if(kitName.length() > 40) {
@@ -157,10 +172,78 @@ public class InventoryManager {
 				human.save(parent);
 				parent.set("Inventory", nbt.get("inventory"));
 				human.f(parent);
-				return true;
+				return cleanInventory(player);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
+		}
+		return false;
+	}
+
+	/**
+	 * Sanitizes a player's inventory.
+	 *
+	 * Currently:
+	 *  * Stack Size
+	 *  * Enchantments
+	 *  * Potion effect
+	 *  * Eliminate exploit blocks (bedrock, dragon egg)
+	 */
+	public static boolean cleanInventory(Player player) {
+		try {
+			if (player == null) return true;
+			PlayerInventory inventory = player.getInventory();
+			if (inventory == null) return true;
+			for (int i = 0; i < inventory.getSize(); i++) {
+				ItemStack item = inventory.getItem(i);
+				if (item == null) continue;
+				if (Material.BEDROCK.equals(item.getType()) || Material.BARRIER.equals(item.getType()) ||
+						Material.DRAGON_EGG.equals(item.getType()) || 
+						Material.END_CRYSTAL.equals(item.getType()) ||
+						Material.END_GATEWAY.equals(item.getType()) ||
+						Material.ENDER_PORTAL.equals(item.getType()) ||
+						Material.PORTAL.equals(item.getType()) ||
+						Material.STRUCTURE_BLOCK.equals(item.getType()) ||
+						Material.STRUCTURE_VOID.equals(item.getType())) {
+					inventory.clear(i);
+					continue;
+				}
+				// Create NBT-clear copy.
+				ItemStack clone = new ItemStack(item.getType(), item.getAmount(), item.getDurability());
+
+				// Sanitize Stack Size
+				if (clone.getMaxStackSize() > 0 && item.getAmount() > clone.getMaxStackSize()) {
+					clone.setAmount(clone.getMaxStackSize());
+				} else if (clone.getMaxStackSize() < 0 && item.getAmount() > 1) {
+					clone.setAmount(1);
+				}
+
+				// Sanitize Enchantments
+				Map<Enchantment, Integer> ench = item.getEnchantments();
+				if (ench != null && ench.size() > 0) {
+					ench.forEach( (k, v) -> {
+						try {
+							clone.addEnchantment(k, v);
+						} catch (IllegalArgumentException iae) {
+						}
+					});
+				}
+
+				// Sanitize potion effects
+				if (item.hasItemMeta()) {
+					ItemMeta meta = item.getItemMeta();
+					if (meta instanceof PotionMeta) {
+						PotionMeta pot = ((PotionMeta) meta);
+						pot.clearCustomEffects();
+
+						clone.setItemMeta(pot);
+					}
+				}
+				inventory.setItem(i, clone);
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return false;
 	}

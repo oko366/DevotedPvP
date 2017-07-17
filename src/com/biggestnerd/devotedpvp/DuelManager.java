@@ -20,6 +20,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -146,6 +147,7 @@ public class DuelManager implements Listener {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		eloCache.put(event.getPlayer().getUniqueId(), getElo(event.getPlayer().getUniqueId()));
 		fixRank(event.getPlayer().getUniqueId());
+		InventoryManager.cleanInventory(event.getPlayer());
 		if(event.getPlayer().getWorld().getName().startsWith("duel")) {
 			event.getPlayer().teleport(DevotedPvP.getInstance().getSpawnWorld().getSpawnLocation());
 		}
@@ -178,6 +180,12 @@ public class DuelManager implements Listener {
 			}
 		}
 	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerGameModeChangeEvent(PlayerGameModeChangeEvent event) {
+		InventoryManager.cleanInventory(event.getPlayer());
+	}
+
 
 	private void endRankedMatch(UUID winner, UUID loser) {
 		playerWinDuel(Bukkit.getPlayer(winner), Bukkit.getPlayer(loser));
@@ -232,6 +240,10 @@ public class DuelManager implements Listener {
 		String message = ChatColor.GREEN + "Your" + (ranked ? " ranked" : "") + " duel with %s will begin shortly.";
 		p1.sendMessage(String.format(message, p2.getName()));
 		p2.sendMessage(String.format(message, p1.getName()));
+
+		InventoryManager.cleanInventory(p1);
+		InventoryManager.cleanInventory(p2);
+
 		plugin.getMapManager().randomSpawnForDuel(p1, p2);
 	}
 	

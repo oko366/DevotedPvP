@@ -111,6 +111,13 @@ public class MapLoader {
 	}
 	
 	public static void cleanUp() {
+		if (rootFolder == null) {
+			System.err.println("Failed to cleanup; root directory missing or misconfigured?");
+			return;
+		}
+		if (rootFolder.listFiles() == null) {
+			return;
+		}
 		for(File file : rootFolder.listFiles()) {
 			if(file.getName().startsWith("dir_")) {
 				try {
