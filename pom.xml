@@ -4,47 +4,57 @@
 
 	<groupId>com.biggestnerd.devotedpvp</groupId>
 	<artifactId>DevotedPvP</artifactId>
-	<version>1.2.1</version>
+	<version>1.2.2</version>
 	<packaging>jar</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 
 	<build>
-		<sourceDirectory>${basedir}/src</sourceDirectory>
-
 		<resources>
 			<resource>
-				<directory>${basedir}</directory>
+				<directory>${basedir}/src/main/resources</directory>
 				<includes>
 					<include>*.yml</include>
-					<include>license.txt</include>
 					<include>_default.png</include>
 				</includes>
 				<filtering>true</filtering>
 			</resource>
+			<resource>
+				<directory>${basedir}</directory>
+				<includes>
+					<include>license.txt</include>
+				</includes>
+			</resource>
 		</resources>
-
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.3</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		</plugins>
 	</build>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
 			<artifactId>spigot</artifactId>
-			<version>1.12-R0.1-SNAPSHOT</version>
+			<version>1.10.2-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>vg.civcraft.mc.civmodcore</groupId>
+			<artifactId>CivModCore</artifactId>
+			<version>1.6.0</version>
+		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>spigot-repo</id>
+			<url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+		</repository>
+		<repository>
+			<id>devoted-repo</id>
+			<url>https://build.devotedmc.com/plugin/repository/everything/</url>
+		</repository>
+	</repositories>
 </project>
