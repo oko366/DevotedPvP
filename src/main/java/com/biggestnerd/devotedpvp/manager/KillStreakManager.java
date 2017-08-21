@@ -1,7 +1,6 @@
 package com.biggestnerd.devotedpvp.manager;
 
 import com.biggestnerd.devotedpvp.DevotedPvP;
-
 import com.bobacadodl.imgmessage.ImageChar;
 import com.bobacadodl.imgmessage.ImageMessage;
 import java.awt.image.BufferedImage;
@@ -40,22 +39,6 @@ public class KillStreakManager {
 		} else {
 			return streaks.get(player.getUniqueId());
 		}
-	}
-
-	public void incrementKillStreak(Player player) {
-		if (!streaks.containsKey(player.getUniqueId())) {
-			streaks.put(player.getUniqueId(), 1);
-		} else {
-			streaks.put(player.getUniqueId(), streaks.get(player.getUniqueId()) + 1);
-		}
-	}
-
-	public void resetKillStreaks() {
-		streaks.clear();
-	}
-
-	public void resetKillStreak(Player player) {
-		streaks.remove(player.getUniqueId());
 	}
 
 	public void handlePlayerDeath(Player player) {
@@ -100,6 +83,14 @@ public class KillStreakManager {
 		}
 	}
 
+	public void incrementKillStreak(Player player) {
+		if (!streaks.containsKey(player.getUniqueId())) {
+			streaks.put(player.getUniqueId(), 1);
+		} else {
+			streaks.put(player.getUniqueId(), streaks.get(player.getUniqueId()) + 1);
+		}
+	}
+
 	public void loadPlayerSkin(Player player) {
 		BufferedImage face = null;
 		try {
@@ -115,5 +106,13 @@ public class KillStreakManager {
 		if (face != null) {
 			faces.put(player.getUniqueId(), face);
 		}
+	}
+
+	public void resetKillStreak(Player player) {
+		streaks.remove(player.getUniqueId());
+	}
+
+	public void resetKillStreaks() {
+		streaks.clear();
 	}
 }

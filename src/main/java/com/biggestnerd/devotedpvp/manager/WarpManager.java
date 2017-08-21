@@ -1,7 +1,7 @@
 package com.biggestnerd.devotedpvp.manager;
 
 import com.biggestnerd.devotedpvp.DevotedPvP;
-import com.biggestnerd.devotedpvp.Warp;
+import com.biggestnerd.devotedpvp.model.Warp;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,6 +25,36 @@ public class WarpManager {
 		loadWarps();
 	}
 
+	public void addWarp(Warp w) {
+		warps.put(w.getName(), w);
+	}
+
+	public Warp getRandomWarp(UUID uuid) {
+		Warp[] w = warps.values().toArray(new Warp[warps.values().size()]);
+		if (w.length == occupiedWarps.size()) {
+			return null;
+		}
+		if (w.length > 0) {
+			Warp result = w[rng.nextInt(w.length)];
+			if (occupiedWarps.values().contains(result)) {
+				return getRandomWarp(uuid);
+			} else {
+				occupiedWarps.put(uuid, result);
+				return result;
+			}
+		}
+		return null;
+	}
+
+	public Warp getWarp(String name) {
+		return warps.get(name);
+	}
+
+	public void handleMatchEnd(Player winner, Player loser) {
+		occupiedWarps.remove(winner.getUniqueId());
+		occupiedWarps.remove(loser.getUniqueId());
+	}
+
 	public void loadWarps() {
 		File wrps = new File(DevotedPvP.getInstance().getDataFolder().getAbsolutePath() + File.separator + "warps.yml");
 		if (wrps.exists()) {
@@ -44,6 +74,10 @@ public class WarpManager {
 		int y = config.getInt("y");
 		int z = config.getInt("z");
 		return new Location(Bukkit.getServer().getWorld(world), x, y, z);
+	}
+
+	public void removeWarp(String s) {
+		warps.remove(s);
 	}
 
 	public void saveLocation(ConfigurationSection c, Location loc) {
@@ -68,39 +102,5 @@ public class WarpManager {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public Warp getWarp(String name) {
-		return warps.get(name);
-	}
-
-	public Warp getRandomWarp(UUID uuid) {
-		Warp[] w = warps.values().toArray(new Warp[warps.values().size()]);
-		if (w.length == occupiedWarps.size()) {
-			return null;
-		}
-		if (w.length > 0) {
-			Warp result = w[rng.nextInt(w.length)];
-			if (occupiedWarps.values().contains(result)) {
-				return getRandomWarp(uuid);
-			} else {
-				occupiedWarps.put(uuid, result);
-				return result;
-			}
-		}
-		return null;
-	}
-
-	public void handleMatchEnd(Player winner, Player loser) {
-		occupiedWarps.remove(winner.getUniqueId());
-		occupiedWarps.remove(loser.getUniqueId());
-	}
-
-	public void addWarp(Warp w) {
-		warps.put(w.getName(), w);
-	}
-
-	public void removeWarp(String s) {
-		warps.remove(s);
 	}
 }

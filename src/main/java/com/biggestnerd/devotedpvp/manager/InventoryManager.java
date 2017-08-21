@@ -2,8 +2,7 @@ package com.biggestnerd.devotedpvp.manager;
 
 import com.biggestnerd.devotedpvp.DevotedPvP;
 import com.biggestnerd.devotedpvp.PvPDao;
-import com.biggestnerd.devotedpvp.PvPInventory;
-
+import com.biggestnerd.devotedpvp.model.PvPInventory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -17,53 +16,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
 public class InventoryManager {
-
-	private PvPDao db;
-	private DevotedPvP plugin;
-	private Map<String, PvPInventory> inventories;
-
-	public InventoryManager() {
-		plugin = DevotedPvP.getInstance();
-		db = plugin.getDB();
-		inventories = new HashMap<String, PvPInventory>();
-	}
-
-	public boolean saveInventory(Player player, String kitName) {
-		if (!cleanInventory(player)) {
-			plugin.getLogger().log(Level.WARNING, "For some reason, " + player.getName() + " has an uncleanable kit");
-			return false;
-		}
-		if (kitName.length() > 40) {
-			kitName = kitName.substring(0, 40);
-		}
-		PvPInventory inv = PvPInventory.create(kitName, player);
-		if (inv == null) {
-			return false;
-		}
-		inventories.put(kitName.toLowerCase(), inv);
-		db.savePvPInventory(inv);
-		return true;
-	}
-
-	public PvPInventory getInventory(String name) {
-		PvPInventory inv = inventories.get(name.toLowerCase());
-		if (inv == null) {
-			inv = db.getPvpInventory(name);
-			if (inv != null) {
-				inventories.put(name.toLowerCase(), inv);
-			}
-		}
-		return inv;
-	}
-
-	public void deleteInventory(PvPInventory inv) {
-		inventories.remove(inv.getName().toLowerCase());
-		db.deletePvPInventory(inv);
-	}
-
-	public Set<String> getInvNames() {
-		return inventories.keySet();
-	}
 
 	/**
 	 * Sanitizes a player's inventory.
@@ -127,5 +79,52 @@ public class InventoryManager {
 			e.printStackTrace();
 		}
 		return false;
+	}
+	private PvPDao db;
+	private DevotedPvP plugin;
+
+	private Map<String, PvPInventory> inventories;
+
+	public InventoryManager() {
+		plugin = DevotedPvP.getInstance();
+		db = plugin.getDB();
+		inventories = new HashMap<String, PvPInventory>();
+	}
+
+	public void deleteInventory(PvPInventory inv) {
+		inventories.remove(inv.getName().toLowerCase());
+		db.deletePvPInventory(inv);
+	}
+
+	public PvPInventory getInventory(String name) {
+		PvPInventory inv = inventories.get(name.toLowerCase());
+		if (inv == null) {
+			inv = db.getPvpInventory(name);
+			if (inv != null) {
+				inventories.put(name.toLowerCase(), inv);
+			}
+		}
+		return inv;
+	}
+
+	public Set<String> getInvNames() {
+		return inventories.keySet();
+	}
+
+	public boolean saveInventory(Player player, String kitName) {
+		if (!cleanInventory(player)) {
+			plugin.getLogger().log(Level.WARNING, "For some reason, " + player.getName() + " has an uncleanable kit");
+			return false;
+		}
+		if (kitName.length() > 40) {
+			kitName = kitName.substring(0, 40);
+		}
+		PvPInventory inv = PvPInventory.create(kitName, player);
+		if (inv == null) {
+			return false;
+		}
+		inventories.put(kitName.toLowerCase(), inv);
+		db.savePvPInventory(inv);
+		return true;
 	}
 }

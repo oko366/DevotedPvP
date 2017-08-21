@@ -3,6 +3,7 @@ authors: [Maxopoly, TeaJizzle, TealNerd]
 version: ${project.version}
 main: com.biggestnerd.devotedpvp.DevotedPvP
 depend: [CivModCore]
+softdepend: [Vault] 
 commands:
   inv:
     description: "Save/load inventories."
@@ -33,6 +34,11 @@ commands:
     usage: /elo
     permission: pvp.duel
     aliases: [rank]
+  wm:
+    permission: pvp.badmin
+    aliases: [warpmanage]
+  spectate:
+    permission: pvp.use
 permissions:
   pvp.use:
     description: "use inventory saving/loading."

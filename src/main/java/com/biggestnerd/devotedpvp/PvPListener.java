@@ -32,58 +32,27 @@ public class PvPListener implements Listener {
 	}
 
 	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent event) {
-		event.getPlayer().teleport(dm.getLobbyLocation());
-		km.loadPlayerSkin(event.getPlayer());
-	}
-
-	@EventHandler
-	public void onPlayerLeave(PlayerQuitEvent event) {
-		UUID id = event.getPlayer().getUniqueId();
-		if (dm.isInDuel(id)) {
-			dm.forfeitDuel(event.getPlayer());
-		}
-	}
-
-	@EventHandler
-	public void onPlayerDeath(PlayerDeathEvent event) {
-		UUID id = event.getEntity().getUniqueId();
-		if (dm.isInDuel(id)) {
-			dm.forfeitDuel(event.getEntity());
-		} else {
-			km.handlePlayerDeath(event.getEntity());
-		}
-		event.getDrops().clear();
-		event.setDeathMessage("");
-
-	}
-
-	@EventHandler
-	public void playerDamage(EntityDamageEvent e) {
-		if (e.getEntityType() != EntityType.PLAYER) {
-			return;
-		}
-		if (dm.isInvulnerable((Player) e.getEntity())) {
-			e.setCancelled(true);
-		}
-	}
-
-	@EventHandler
 	public void dropItem(PlayerDropItemEvent e) {
 		if (e.getItemDrop() != null) {
 			e.getItemDrop().remove();
 		}
 	}
 
-	@EventHandler(ignoreCancelled = true)
-	public void onPlayerGameModeChangeEvent(PlayerGameModeChangeEvent event) {
-		InventoryManager.cleanInventory(event.getPlayer());
+	private void giveItem(ItemFrame frame, Player p) {
+		ItemStack item = frame.getItem();
+		if (item == null) {
+			return;
+		}
+		item.setAmount(item.getType().getMaxStackSize());
+		p.getInventory().addItem(item);
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void hitItemFrame(EntityDamageByEntityEvent e) {
 		if (e.getEntity() instanceof ItemFrame) {
 			e.setCancelled(true);
+		} else {
+			return;
 		}
 		if (!(e.getDamager() instanceof Player)) {
 			return;
@@ -110,13 +79,46 @@ public class PvPListener implements Listener {
 		e.setCancelled(true);
 	}
 
-	private void giveItem(ItemFrame frame, Player p) {
-		ItemStack item = frame.getItem();
-		if (item == null) {
+	@EventHandler
+	public void onPlayerDeath(PlayerDeathEvent event) {
+		UUID id = event.getEntity().getUniqueId();
+		if (dm.isInDuel(id)) {
+			dm.forfeitDuel(event.getEntity());
+		} else {
+			km.handlePlayerDeath(event.getEntity());
+		}
+		event.getDrops().clear();
+		event.setDeathMessage("");
+
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerGameModeChangeEvent(PlayerGameModeChangeEvent event) {
+		InventoryManager.cleanInventory(event.getPlayer());
+	}
+
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		event.getPlayer().teleport(dm.getLobbyLocation());
+		km.loadPlayerSkin(event.getPlayer());
+	}
+
+	@EventHandler
+	public void onPlayerLeave(PlayerQuitEvent event) {
+		UUID id = event.getPlayer().getUniqueId();
+		if (dm.isInDuel(id)) {
+			dm.forfeitDuel(event.getPlayer());
+		}
+	}
+
+	@EventHandler
+	public void playerDamage(EntityDamageEvent e) {
+		if (e.getEntityType() != EntityType.PLAYER) {
 			return;
 		}
-		item.setAmount(item.getType().getMaxStackSize());
-		p.getInventory().addItem(item);
+		if (dm.isInvulnerable((Player) e.getEntity())) {
+			e.setCancelled(true);
+		}
 	}
 
 }

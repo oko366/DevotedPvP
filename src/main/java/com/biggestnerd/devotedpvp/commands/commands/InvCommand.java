@@ -1,8 +1,8 @@
 package com.biggestnerd.devotedpvp.commands.commands;
 
 import com.biggestnerd.devotedpvp.DevotedPvP;
-import com.biggestnerd.devotedpvp.PvPInventory;
 import com.biggestnerd.devotedpvp.manager.InventoryManager;
+import com.biggestnerd.devotedpvp.model.PvPInventory;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;

@@ -6,6 +6,8 @@ import com.biggestnerd.devotedpvp.commands.commands.DuelCommand;
 import com.biggestnerd.devotedpvp.commands.commands.EloCommand;
 import com.biggestnerd.devotedpvp.commands.commands.ForfeitCommand;
 import com.biggestnerd.devotedpvp.commands.commands.InvCommand;
+import com.biggestnerd.devotedpvp.commands.commands.SpectateCommand;
+import com.biggestnerd.devotedpvp.commands.commands.WarpManageCommand;
 import vg.civcraft.mc.civmodcore.command.CommandHandler;
 
 public class PvPCommandHandler extends CommandHandler {
@@ -18,5 +20,7 @@ public class PvPCommandHandler extends CommandHandler {
 		addCommands(new ForfeitCommand());
 		addCommands(new InvCommand());
 		addCommands(new ClearCommand());
+		addCommands(new WarpManageCommand());
+		addCommands(new SpectateCommand());
 	}
 }

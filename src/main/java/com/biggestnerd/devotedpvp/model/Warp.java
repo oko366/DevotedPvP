@@ -1,4 +1,4 @@
-package com.biggestnerd.devotedpvp;
+package com.biggestnerd.devotedpvp.model;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -27,6 +27,10 @@ public class Warp {
 		return first;
 	}
 
+	public String getName() {
+		return name;
+	}
+
 	public Location getSecond() {
 		return second;
 	}
@@ -37,10 +41,6 @@ public class Warp {
 
 	public void setSecond(Location second) {
 		this.second = second;
-	}
-
-	public String getName() {
-		return name;
 	}
 
 	public void tpFirst(Player p) {
