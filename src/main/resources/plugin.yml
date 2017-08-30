@@ -1,7 +1,9 @@
 name: DevotedPvP
-authors: [TealNerd]
+authors: [Maxopoly, TeaJizzle, TealNerd]
 version: ${project.version}
 main: com.biggestnerd.devotedpvp.DevotedPvP
+depend: [CivModCore]
+softdepend: [Vault] 
 commands:
   inv:
     description: "Save/load inventories."
@@ -19,6 +21,9 @@ commands:
     description: Accept the last duel request
     usage: /accept
     permission: pvp.duel
+  clear:
+    usage: /clear
+    permission: pvp.duel
   forfeit:
     description: Forfeit a duel
     usage: /forfeit
@@ -27,27 +32,20 @@ commands:
   elo:
     description: Check your elo
     usage: /elo
-    permission: pvp.use
+    permission: pvp.duel
     aliases: [rank]
-  team:
-    description: Change your team
-    usage: /team <color>
-    permission: pvp.use
-  spectate:
-    description: Spectate another player
-    usage: /spectate <player>
-    permission: pvp.use
-  maps:
-    description: Command for map stuff
-    usage: /maps <list|blank> or /maps create <name>
+  wm:
     permission: pvp.badmin
+    aliases: [warpmanage]
+  spectate:
+    permission: pvp.use
 permissions:
   pvp.use:
     description: "use inventory saving/loading."
     default: true
   pvp.duel:
     description: "allows players to duel"
-    default: op 
+    default: true 
   pvp.queue:
     description: "allows players to queue"
     default: op
