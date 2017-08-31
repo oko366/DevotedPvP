@@ -103,6 +103,7 @@ public class DuelManager {
 	public void playerWinDuel(UUID winner) {
 		UUID loser = dueling.get(winner);
 		adJustElo(winner, loser);
+		announceDuelWin(winner, loser);
 		dueling.remove(winner);
 		dueling.remove(loser);
 		Player p1 = Bukkit.getPlayer(winner);
@@ -121,6 +122,21 @@ public class DuelManager {
 			p2.sendMessage(ChatColor.RED + "You have lost your duel against " + p1.getName());
 		}
 		plugin.getWarpManager().handleMatchEnd(p1, p2);
+	}
+
+	private void announceDuelWin(UUID winner, UUID loser) {
+		Player pWinner = Bukkit.getPlayer(winner);
+		Player pLoser = Bukkit.getPlayer(loser);
+		String winnerName = pWinner != null ? pWinner.getName() : "unknown";
+		String loserName = pLoser != null ? pLoser.getName() : "unknown";
+		for (Player p : Bukkit.getServer().getOnlinePlayers()) {
+			if (p.getUniqueId().equals(winner) || p.getUniqueId().equals(loser)) {
+				continue;
+			}
+			p.sendMessage(ChatColor.DARK_BLUE
+					+ String.format("%s (%d) won a duel against %s (%d)", winnerName, getElo(winner), loserName,
+							getElo(loser)));
+		}
 	}
 
 	public void requestDuel(Player player, Player request) {

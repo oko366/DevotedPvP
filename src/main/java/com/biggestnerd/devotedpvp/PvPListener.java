@@ -99,6 +99,7 @@ public class PvPListener implements Listener {
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
+		InventoryManager.cleanInventory(event.getPlayer());
 		event.getPlayer().teleport(dm.getLobbyLocation());
 		km.loadPlayerSkin(event.getPlayer());
 	}
