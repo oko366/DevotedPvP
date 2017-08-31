@@ -7,12 +7,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Level;
-import net.minecraft.server.v1_10_R1.EntityHuman;
-import net.minecraft.server.v1_10_R1.EntityPlayer;
-import net.minecraft.server.v1_10_R1.NBTCompressedStreamTools;
-import net.minecraft.server.v1_10_R1.NBTTagCompound;
+import net.minecraft.server.v1_12_R1.EntityHuman;
+import net.minecraft.server.v1_12_R1.EntityPlayer;
+import net.minecraft.server.v1_12_R1.NBTCompressedStreamTools;
+import net.minecraft.server.v1_12_R1.NBTTagCompound;
 import org.bukkit.ChatColor;
-import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 public class PvPInventory {
@@ -22,7 +22,7 @@ public class PvPInventory {
 		CraftPlayer craft = (CraftPlayer) p;
 		EntityHuman human = craft.getHandle();
 		NBTTagCompound nbt = new NBTTagCompound();
-		human.e(nbt);
+		human.save(nbt);
 		NBTTagCompound invNBT = new NBTTagCompound();
 		invNBT.set("inventory", nbt.get("Inventory"));
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -35,6 +35,7 @@ public class PvPInventory {
 		}
 		return new PvPInventory(name, p.getUniqueId(), out.toByteArray());
 	}
+
 	private byte[] data;
 	private UUID owner;
 
@@ -78,7 +79,7 @@ public class PvPInventory {
 		CraftPlayer craft = (CraftPlayer) p;
 		EntityPlayer human = craft.getHandle();
 		NBTTagCompound parent = new NBTTagCompound();
-		human.e(parent);
+		human.save(parent);
 		parent.set("Inventory", nbt.get("inventory"));
 		human.f(parent);
 	}

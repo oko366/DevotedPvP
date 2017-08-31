@@ -18,6 +18,7 @@ public class ConfigManager {
 	private List<String> spectatorPerms;
 
 	public ConfigManager(DevotedPvP plugin) {
+		this.plugin = plugin;
 		reloadConfig();
 		parseConfig();
 	}
