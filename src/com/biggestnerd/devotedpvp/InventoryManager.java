@@ -16,6 +16,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.Material;
+import org.bukkit.Bukkit;
 
 import net.md_5.bungee.api.ChatColor;
 import net.minecraft.server.v1_12_R1.EntityHuman;
@@ -196,6 +197,11 @@ public class InventoryManager {
 			if (inventory == null) return true;
 			for (int i = 0; i < inventory.getSize(); i++) {
 				ItemStack item = inventory.getItem(i);
+				// Allow external plugins to vouch for an item.
+				ItemSafeEvent event = new ItemSafeEvent(item);
+				Bukkit.getServer().getPluginManager().callEvent(event);
+				if (event.isValid()) continue;
+				// done vouch.
 				if (item == null) continue;
 				if (Material.BEDROCK.equals(item.getType()) || Material.BARRIER.equals(item.getType()) ||
 						Material.DRAGON_EGG.equals(item.getType()) || 
