@@ -2,6 +2,7 @@ package com.biggestnerd.devotedpvp.manager;
 
 import com.biggestnerd.devotedpvp.DevotedPvP;
 import com.biggestnerd.devotedpvp.PvPDao;
+import com.biggestnerd.devotedpvp.ItemSafeEvent;
 import com.biggestnerd.devotedpvp.model.PvPInventory;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.Bukkit;
 
 public class InventoryManager {
 
@@ -33,6 +35,11 @@ public class InventoryManager {
 				ItemStack item = inventory.getItem(i);
 				if (item == null)
 					continue;
+				// Allow external plugins to vouch for an item.
+				ItemSafeEvent event = new ItemSafeEvent(item);
+				Bukkit.getServer().getPluginManager().callEvent(event);
+				if (event.isValid()) continue;
+				// done vouch.
 				if (Material.BEDROCK.equals(item.getType()) || Material.BARRIER.equals(item.getType())
 						|| Material.DRAGON_EGG.equals(item.getType()) || Material.END_CRYSTAL.equals(item.getType())
 						|| Material.END_GATEWAY.equals(item.getType()) || Material.ENDER_PORTAL.equals(item.getType())
