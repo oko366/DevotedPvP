@@ -54,6 +54,7 @@ public class InvCommand extends PlayerCommand {
 				}
 				inv.load(player);
 				player.sendMessage(ChatColor.GREEN + "Inventory successfully loaded: " + args[1]);
+				InventoryManager.cleanInventory(player);
 				break;
 			case "delete":
 			case "del":

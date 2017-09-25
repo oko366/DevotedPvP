@@ -59,14 +59,20 @@ public class InventoryManager {
 				}
 
 				// Sanitize Enchantments
-				Map<Enchantment, Integer> ench = item.getEnchantments();
-				if (ench != null && ench.size() > 0) {
-					ench.forEach((k, v) -> {
-						try {
-							clone.addEnchantment(k, v);
-						} catch (IllegalArgumentException iae) {
-						}
-					});
+				if (item.hasItemMeta()) {
+					ItemMeta cMeta = clone.getItemMeta();
+					Map<Enchantment, Integer> ench = item.getEnchantments();
+					if (ench != null && ench.size() > 0) {
+						ench.forEach((k, v) -> {
+							try {
+								if (!cMeta.hasConflictingEnchant(k)) {
+									cMeta.addEnchant(k, v, false);
+								}
+							} catch (IllegalArgumentException iae) {
+							}
+						});
+					}
+					clone.setItemMeta(cMeta);
 				}
 
 				// Sanitize potion effects
