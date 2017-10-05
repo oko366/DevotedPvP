@@ -100,6 +100,7 @@ public class PvPDao extends ManagedDatasource {
 		try (Connection conn = getConnection();
 				PreparedStatement prep = conn.prepareStatement("replace into elos (name,elo) values(?,?);");) {
 			for (Entry<UUID, Integer> entry : elos.entrySet()) {
+				if (entry == null || entry.getKey() == null) continue;
 				prep.setString(1, entry.getKey().toString());
 				prep.setInt(2, entry.getValue());
 				prep.execute();

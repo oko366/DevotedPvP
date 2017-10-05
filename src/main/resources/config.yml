@@ -5,5 +5,19 @@ sql:
   username: 'root'
   password: ''
 spawnworld: world
-spectatorPerms:
- - example.permission
+spawnbounds:
+  miny: 70
+  minz: -56
+  maxx: 56
+  maxy: 135
+  maxz: 56
+spectatorPerms: # anything in this list is "added" when /spectate is toggled on, and "removed" when /spectate is toggled off
+  - -essentials.tpa
+  - -essentials.tpahere
+  - -essentials.tpo
+  - essentials.tp
+# in the above example, essentials teleport assist functions are disabled, but regular "tp" is enabled. Don't do this, just an example.
+deathmessages:
+  - RIP in pieces
+  - Goodnight sweet prince
+# messages to show on death

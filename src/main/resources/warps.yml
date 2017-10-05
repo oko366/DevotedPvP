@@ -1,0 +1,29 @@
+Name:
+ player1:
+  world: world
+  x: 100
+  y: 110
+  z: 100
+ player2:
+  world: world
+  x: 110
+  y: 110
+  z: 110
+Name2:
+ pos1:
+  world: world_the_end
+  x: 90
+  y: 160
+  z: -100
+ pos2:
+  world: world_the_end
+  x: 100
+  y: 155
+  z: -120
+# just a couple of simple examples.
+# use this file to add warps
+# Each warp is randomly chosen
+# when a duel is started, and
+# the first position is where the first player
+# is sent to, second, the second player, etc
+#

@@ -33,8 +33,11 @@ public class PvPListener implements Listener {
 
 	@EventHandler
 	public void dropItem(PlayerDropItemEvent e) {
-		if (e.getItemDrop() != null) {
-			e.getItemDrop().remove();
+		UUID id = e.getPlayer().getUniqueId();
+		if (dm.isInDuel(id)) {
+			if (e.getItemDrop() != null) {
+				e.getItemDrop().remove();
+			}
 		}
 	}
 
@@ -84,10 +87,10 @@ public class PvPListener implements Listener {
 		UUID id = event.getEntity().getUniqueId();
 		if (dm.isInDuel(id)) {
 			dm.forfeitDuel(event.getEntity());
+			event.getDrops().clear();
 		} else {
 			km.handlePlayerDeath(event.getEntity());
 		}
-		event.getDrops().clear();
 		event.setDeathMessage("");
 
 	}

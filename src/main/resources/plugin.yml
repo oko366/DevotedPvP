@@ -1,5 +1,5 @@
 name: DevotedPvP
-authors: [Maxopoly, TeaJizzle, TealNerd]
+authors: [Maxopoly, TeaJizzle, TealNerd, ProgrammerDan]
 version: ${project.version}
 main: com.biggestnerd.devotedpvp.DevotedPvP
 depend: [CivModCore]
