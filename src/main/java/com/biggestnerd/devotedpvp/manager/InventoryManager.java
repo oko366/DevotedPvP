@@ -25,6 +25,9 @@ public class InventoryManager {
 	 * Currently: * Stack Size * Enchantments * Potion effect * Eliminate exploit blocks (bedrock, dragon egg)
 	 */
 	public static boolean cleanInventory(Player player) {
+		if(!DevotedPvP.getInstance().getConfigManager().shouldCleanInventories()) {
+			return true;
+		}
 		try {
 			if (player == null)
 				return true;
