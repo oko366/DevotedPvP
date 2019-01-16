@@ -50,6 +50,7 @@ public class DevotedPvP extends ACivMod {
 	@Override
 	public void onDisable() {
 		duelMan.saveAllElos();
+		warpMan.saveWarps();
 	}
 
 	@Override
