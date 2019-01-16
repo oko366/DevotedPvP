@@ -21,3 +21,6 @@ deathmessages:
   - RIP in pieces
   - Goodnight sweet prince
 # messages to show on death
+
+cleanInventories: true
+#whether to remove unwanted NBT etc. which can be obtained in gamemode 1

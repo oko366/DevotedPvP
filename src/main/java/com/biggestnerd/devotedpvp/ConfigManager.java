@@ -16,6 +16,7 @@ public class ConfigManager {
 	private World spawnWorld;
 	private PvPDao dao;
 	private List<String> spectatorPerms;
+	private boolean cleanInventories;
 
 	public ConfigManager(DevotedPvP plugin) {
 		this.plugin = plugin;
@@ -36,6 +37,13 @@ public class ConfigManager {
 	 */
 	public World getSpawnWorld() {
 		return spawnWorld;
+	}
+	
+	/**
+	 * @return Whether saved inventories should be cleaned of unwanted NBT and unobtainable items
+	 */
+	public boolean shouldCleanInventories() {
+		return cleanInventories;
 	}
 
 	/**
@@ -61,6 +69,7 @@ public class ConfigManager {
 		dao = new PvPDao(plugin, username, password, host, port, dbname, 5, 1000L, 600000L, 7200000L);
 
 		spectatorPerms = config.getStringList("spectatorPerms");
+		cleanInventories = config.getBoolean("cleanInventories", true);
 
 	}
 
