@@ -13,10 +13,6 @@ commands:
     description: Requests to duel someone
     usage: /duel <playername>
     permission: pvp.duel
-  queue:
-    description: Queue for a ranked duel
-    usage: /queue
-    permission: pvp.queue
   accept:
     description: Accept the last duel request
     usage: /accept
@@ -46,9 +42,6 @@ permissions:
   pvp.duel:
     description: "allows players to duel"
     default: true 
-  pvp.queue:
-    description: "allows players to queue"
-    default: op
   pvp.badmin:
     description: "Admin crimes inc"
     default: op

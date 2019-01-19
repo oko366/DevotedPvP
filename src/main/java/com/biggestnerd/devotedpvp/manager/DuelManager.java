@@ -46,9 +46,17 @@ public class DuelManager {
 			player.sendMessage(ChatColor.RED + accepted.getName() + " has not requested a duel with you");
 			return;
 		}
-		requestedDuels.get(player.getUniqueId()).remove(accepted.getUniqueId());
-		startDuel(player, accepted);
-
+		if (dueling.containsKey(player.getUniqueId())) {
+			player.sendMessage(ChatColor.RED + "You are already in a duel, you cannot accept a new one");
+			return;
+		}
+		if (dueling.containsKey(accepted.getUniqueId())) {
+			player.sendMessage(ChatColor.RED + accepted.getName() + " is already in a duel, try again later");
+			return;
+		}
+		if (startDuel(player, accepted)) {
+			requestedDuels.get(player.getUniqueId()).remove(accepted.getUniqueId());
+		}
 	}
 
 	private void adJustElo(UUID winner, UUID loser) {
@@ -174,7 +182,13 @@ public class DuelManager {
 		player.sendMessage(ChatColor.GOLD + "Your elo is " + getElo(player.getUniqueId()));
 	}
 
-	private void startDuel(Player p1, Player p2) {
+	private boolean startDuel(Player p1, Player p2) {
+		Warp warp = plugin.getWarpManager().getRandomWarp(p1.getUniqueId());
+		if (warp == null) {
+			p1.sendMessage(ChatColor.RED + "No arena is available right now, please try again later");
+			p2.sendMessage(ChatColor.RED + "No arena is available right now, please try again later");
+			return false;
+		}
 		dueling.put(p2.getUniqueId(), p1.getUniqueId());
 		dueling.put(p1.getUniqueId(), p2.getUniqueId());
 		String message = ChatColor.GREEN + "You are now fighting %s";
@@ -183,15 +197,11 @@ public class DuelManager {
 
 		InventoryManager.cleanInventory(p1);
 		InventoryManager.cleanInventory(p2);
-		Warp warp = plugin.getWarpManager().getRandomWarp(p1.getUniqueId());
-		if (warp == null) {
-			p1.sendMessage(ChatColor.RED + "No arena is available right now, please try again later");
-			p2.sendMessage(ChatColor.RED + "No arena is available right now, please try again later");
-			return;
-		}
 		duelStartInvulCooldowns.putOnCoolDown(p1.getUniqueId());
 		duelStartInvulCooldowns.putOnCoolDown(p2.getUniqueId());
 		p1.teleport(warp.getFirst());
 		p2.teleport(warp.getSecond());
+
+		return true;
 	}
 }
