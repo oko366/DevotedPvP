@@ -1,6 +1,8 @@
 # DevotedPvP
 Core plugin for the devoted pvp server
 
+!IMPORTANT! THIS IS AN EXPERIMENTAL 1.14 BUILD. !IMPORTANT!
+
 Features:
 
 * ELO tracking

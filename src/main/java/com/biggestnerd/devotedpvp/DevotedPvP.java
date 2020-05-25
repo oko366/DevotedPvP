@@ -38,8 +38,7 @@ public class DevotedPvP extends ACivMod {
 		return invMan;
 	}
 
-	@Override
-	protected String getPluginName() {
+	public String getPluginName() {
 		return "DevotedPvP";
 	}
 

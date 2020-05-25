@@ -4,7 +4,7 @@
 
 	<groupId>com.biggestnerd.devotedpvp</groupId>
 	<artifactId>DevotedPvP</artifactId>
-	<version>1.2.7</version>
+	<version>1.2.8</version>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -37,13 +37,13 @@
 		<dependency>
 			<groupId>org.spigotmc</groupId>
 			<artifactId>spigot</artifactId>
-			<version>1.12.2-R0.1-SNAPSHOT</version>
+			<version>1.14.4-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>vg.civcraft.mc.civmodcore</groupId>
 			<artifactId>CivModCore</artifactId>
-			<version>1.6.1</version>
+			<version>1.7.9</version>
 		</dependency>
 		<dependency>
 			<groupId>net.milkbowl.vault</groupId>
