@@ -90,6 +90,7 @@ public class PvPListener implements Listener {
 			event.getDrops().clear();
 		} else {
 			km.handlePlayerDeath(event.getEntity());
+			event.getDrops().clear();
 		}
 		event.setDeathMessage("");
 

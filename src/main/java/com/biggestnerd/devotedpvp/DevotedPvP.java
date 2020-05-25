@@ -58,6 +58,7 @@ public class DevotedPvP extends ACivMod {
 		handle = new PvPCommandHandler();
 		handle.registerCommands();
 		super.onEnable();
+		DevotedPvP.getInstance().info("For all your KitPvP needs!");
 		configMan = new ConfigManager(this);
 		dao = configMan.getDAO();
 		invMan = new InventoryManager();
