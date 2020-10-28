@@ -3,7 +3,8 @@ authors: [Maxopoly, TeaJizzle, TealNerd, ProgrammerDan, KaloHG]
 version: ${project.version}
 main: com.biggestnerd.devotedpvp.DevotedPvP
 depend: [CivModCore]
-softdepend: [Vault] 
+softdepend: [Vault]
+api-version: 1.13
 commands:
   inv:
     description: "Save/load inventories."

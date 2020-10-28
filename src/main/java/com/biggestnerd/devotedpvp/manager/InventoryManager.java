@@ -45,7 +45,7 @@ public class InventoryManager {
 				// done vouch.
 				if (Material.BEDROCK.equals(item.getType()) || Material.BARRIER.equals(item.getType())
 						|| Material.DRAGON_EGG.equals(item.getType()) || Material.END_CRYSTAL.equals(item.getType())
-						|| Material.END_GATEWAY.equals(item.getType())
+						|| Material.END_GATEWAY.equals(item.getType()) || Material.END_PORTAL.equals(item.getType())
 						|| Material.NETHER_PORTAL.equals(item.getType()) || Material.STRUCTURE_BLOCK.equals(item.getType())
 						|| Material.STRUCTURE_VOID.equals(item.getType())) {
 					inventory.clear(i);
