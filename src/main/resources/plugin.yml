@@ -35,10 +35,13 @@ commands:
     permission: pvp.badmin
     aliases: [warpmanage]
   spectate:
-    permission: pvp.use
+    permission: pvp.use.spectate
 permissions:
   pvp.use:
     description: "use inventory saving/loading."
+    default: true
+  pvp.use.spectate:
+    description: "use spectate command"
     default: true
   pvp.duel:
     description: "allows players to duel"
