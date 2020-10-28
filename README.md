@@ -1,7 +1,7 @@
 # DevotedPvP
 Core plugin for the devoted pvp server
 
-!IMPORTANT! THIS IS AN EXPERIMENTAL 1.14 BUILD. !IMPORTANT!
+!IMPORTANT! THIS IS AN EXPERIMENTAL 1.16 BUILD. !IMPORTANT!
 
 Features:
 
