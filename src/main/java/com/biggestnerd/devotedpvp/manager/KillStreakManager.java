@@ -9,13 +9,18 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import javax.imageio.ImageIO;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionType;
 
 public class KillStreakManager {
 
@@ -61,11 +66,19 @@ public class KillStreakManager {
 				item = weapon.getItemMeta() == null || weapon.getItemMeta().getDisplayName() == null ? item : weapon
 						.getItemMeta().getDisplayName();
 				msg = player.getName() + " was slain by " + killer.getName();
-				// Add the killer's final health
-				msg += " (" + (int) Math.ceil(killer.getHealth()) + ChatColor.RED + "\u2764" + ChatColor.RESET + ")"; // \u2764
-																														// is
-																														// a
-																														// heart
+				// Add the count of potions
+				int killerPots = countPotions(killer.getInventory());
+				int victimPots = countPotions(player.getInventory());
+
+				char heartSymbol = '\u2764';
+				String redHeart = "" + ChatColor.RED + heartSymbol + ChatColor.RESET;
+
+				if (victimPots == 0) {
+					msg += " (" + killerPots + redHeart + ")";
+				} else {
+					msg += " (" + killerPots + redHeart + " vs " + victimPots + redHeart + ")";
+				}
+
 				item = " with " + item + ".";
 				incrementKillStreak(killer);
 				int streak = getKillStreak(killer);
@@ -81,6 +94,26 @@ public class KillStreakManager {
 			new ImageMessage(face, 8, ImageChar.BLOCK.getChar()).appendText("", "", msg, item, killermsg, extra)
 					.sendToPlayers(Bukkit.getOnlinePlayers());
 		}
+	}
+
+	private int countPotions(Inventory inv) {
+	    AtomicInteger count = new AtomicInteger();
+
+		inv.forEach((item) -> {
+			if (item.getType() != Material.POTION) {
+				return;
+			}
+			if (!item.hasItemMeta()) {
+				return;
+			}
+			PotionMeta meta = (PotionMeta) item.getItemMeta();
+			assert meta != null;
+			if (meta.getBasePotionData().getType() == PotionType.INSTANT_HEAL) {
+				count.getAndIncrement();
+			}
+		});
+
+		return count.intValue();
 	}
 
 	public void incrementKillStreak(Player player) {
