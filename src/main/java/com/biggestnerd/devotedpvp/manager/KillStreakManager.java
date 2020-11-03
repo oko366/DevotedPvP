@@ -9,8 +9,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.LongAdder;
 import javax.imageio.ImageIO;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -53,7 +52,10 @@ public class KillStreakManager {
 		player.getWorld().strikeLightning(player.getLocation().add(0, 100, 0));
 		if (faces.containsKey(player.getUniqueId())) {
 			BufferedImage face = faces.get(player.getUniqueId());
-			String msg = player.getName() + " was slain.";
+			int victimPots = countPotions(player.getInventory());
+			char heartSymbol = '\u2764';
+			String redHeart = "" + ChatColor.RED + heartSymbol + ChatColor.RESET;
+			String msg = player.getName() + " (" + victimPots + redHeart + ") was slain.";
 			String killermsg = "";
 			String extra = messageExtras != null ? messageExtras[rng.nextInt(messageExtras.length)] : "";
 			String item = "";
@@ -65,19 +67,10 @@ public class KillStreakManager {
 				// If their weapon has a custom display name, use that instead
 				item = weapon.getItemMeta() == null || weapon.getItemMeta().getDisplayName() == null ? item : weapon
 						.getItemMeta().getDisplayName();
-				msg = player.getName() + " was slain by " + killer.getName();
+				msg = player.getName() + " (" + victimPots + redHeart + ") was slain by " + killer.getName();
 				// Add the count of potions
 				int killerPots = countPotions(killer.getInventory());
-				int victimPots = countPotions(player.getInventory());
-
-				char heartSymbol = '\u2764';
-				String redHeart = "" + ChatColor.RED + heartSymbol + ChatColor.RESET;
-
-				if (victimPots == 0) {
-					msg += " (" + killerPots + redHeart + ")";
-				} else {
-					msg += " (" + killerPots + redHeart + " vs " + victimPots + redHeart + ")";
-				}
+				msg += " (" + killerPots + redHeart + ")";
 
 				item = " with " + item + ".";
 				incrementKillStreak(killer);
@@ -97,26 +90,26 @@ public class KillStreakManager {
 	}
 
 	private int countPotions(Inventory inv) {
-	    AtomicInteger count = new AtomicInteger();
+		int count = 0;
 
-		inv.forEach((item) -> {
+		for (ItemStack item : inv) {
 			if (item == null) {
-				return;
+				continue;
 			}
-			if (item.getType() != Material.POTION) {
-				return;
+			if (item.getType() != Material.POTION && item.getType() != Material.SPLASH_POTION) {
+				continue;
 			}
 			if (!item.hasItemMeta()) {
-				return;
+				continue;
 			}
 			PotionMeta meta = (PotionMeta) item.getItemMeta();
 			assert meta != null;
 			if (meta.getBasePotionData().getType() == PotionType.INSTANT_HEAL) {
-				count.getAndIncrement();
+				count++;
 			}
-		});
+		}
 
-		return count.intValue();
+		return count;
 	}
 
 	public void incrementKillStreak(Player player) {
