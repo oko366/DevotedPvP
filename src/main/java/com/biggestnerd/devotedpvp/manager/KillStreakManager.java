@@ -100,6 +100,9 @@ public class KillStreakManager {
 	    AtomicInteger count = new AtomicInteger();
 
 		inv.forEach((item) -> {
+			if (item == null) {
+				return;
+			}
 			if (item.getType() != Material.POTION) {
 				return;
 			}
