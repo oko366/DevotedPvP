@@ -123,7 +123,7 @@ public class KillStreakManager {
 	public void loadPlayerSkin(Player player) {
 		BufferedImage face = null;
 		try {
-			URL imagePath = new URL("https://minotar.net/avatar/" + player.getName() + "/8.png");
+			URL imagePath = new URL("https://www.mc-heads.net/avatar/" + player.getName() + "/8.png");
 			face = ImageIO.read(imagePath);
 		} catch (IOException e) {
 			try {
