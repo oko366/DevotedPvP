@@ -1,9 +1,11 @@
 # DevotedPvP
-Core plugin for the devoted pvp server
+PVP utility plugin for minecraft 1.16.4/5
 
-!IMPORTANT! THIS IS AN EXPERIMENTAL 1.16 BUILD. !IMPORTANT!
+## Building
 
-Features:
+To build, make sure you have spigot and craftbukkit installed to your local maven repository. Then run `mvn clean install`.
+
+## Features
 
 * ELO tracking
 
@@ -11,14 +13,11 @@ Features:
 
 * Kit load / save
 
-* Sanitized Kits (no cheaty kits)
+* Sanitized Kits
 
 * External integration supports
 
 and more...
-
-See example configs for how to use
-
 
 ## Sanitized Kits
 
