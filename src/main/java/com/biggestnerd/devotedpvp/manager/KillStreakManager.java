@@ -62,8 +62,8 @@ public class KillStreakManager {
 			if (player.getKiller() != null) {
 				Player killer = player.getKiller();
 				ItemStack weapon = killer.getInventory().getItemInMainHand();
-				// If they aren't holding anything, then they used "their bare hands"
-				item = weapon.getType() == Material.AIR ? "their bare hands" : weapon.getType().toString();
+				// If they aren't holding anything, then they used "their hands"
+				item = weapon.getType() == Material.AIR ? "their hands" : weapon.getType().toString();
 				// If their weapon has a custom display name, use that instead
 				item = weapon.getItemMeta() == null || weapon.getItemMeta().getDisplayName() == null ? item : weapon
 						.getItemMeta().getDisplayName();
@@ -123,7 +123,7 @@ public class KillStreakManager {
 	public void loadPlayerSkin(Player player) {
 		BufferedImage face = null;
 		try {
-			URL imagePath = new URL("https://www.mc-heads.net/avatar/" + player.getName() + "/8.png");
+			URL imagePath = new URL("https://www.mc-heads.net/avatar/" + player.getUniqueId() + "/8.png");
 			face = ImageIO.read(imagePath);
 		} catch (IOException e) {
 			try {
